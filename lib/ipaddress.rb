@@ -38,10 +38,6 @@ class IPAddress
     end
   end
 
-  def contiguous?(other)
-    network_bits <= other.broadcast(:bits).succ and broadcast_bits.succ >= other.network(:bits)
-  end
-
   def each(element = :host)
     case element
     when :address

@@ -179,50 +179,6 @@ describe "IPAddress" do
     end
   end
 
-  describe "#contiguous?" do
-    it "is true if the other IPAddress's network immediately follows this one" do
-      this = IPAddress.new("192.168.0.0/28")
-      other = IPAddress.new("192.168.0.16/28")
-      this.contiguous?(other).should be_true
-    end
-
-    it "is true if the other IPAddress's network immediately precedes this one" do
-      this = IPAddress.new("192.168.0.0/28")
-      other = IPAddress.new("192.167.255.254/28")
-      this.contiguous?(other).should be_true
-    end
-
-    it "is true if the other IPAddress's network includes this one" do
-      this = IPAddress.new("192.168.0.16/28")
-      other = IPAddress.new("192.168.0.0/24")
-      this.contiguous?(other).should be_true
-    end
-
-    it "is true if the other IPAddress's network is included in this one" do
-      this = IPAddress.new("192.168.0.0/24")
-      other = IPAddress.new("192.168.0.16/28")
-      this.contiguous?(other).should be_true
-    end
-
-    it "is true for two host addresses with the same address" do
-      this = IPAddress.new("192.168.0.1")
-      other = IPAddress.new("192.168.0.1")
-      this.contiguous?(other).should be_true
-    end
-
-    it "is false if the other IPAddress's network address is more than 1 greater than this broadcast address" do
-      this = IPAddress.new("192.168.0.0/27")
-      other = IPAddress.new("192.168.0.48/28")
-      this.contiguous?(other).should be_false
-    end
-
-    it "is false if the other IPAddress's broadcast address is more than 1 less than this network address" do
-      this = IPAddress.new("192.168.0.48/28")
-      other = IPAddress.new("192.168.0.0/27")
-      this.contiguous?(other).should be_false
-    end
-  end
-
   describe "#each" do
     it "iterates over each address in the network, including network and broadcast address, if :address is given" do
       ip = IPAddress.new("192.168.0.0/30")

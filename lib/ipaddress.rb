@@ -216,14 +216,6 @@ class IPAddress
     size
   end
 
-  def size_of_mask_bits(bits)
-    size = 0
-    while size < 32 and bits - self.class.mask_bits(size + 1) > 0
-      size += 1
-    end
-    size
-  end
-
   def self.modify(this, address_bits, mask_size, dup_first)
     this = this.dup if dup_first
     this.instance_variable_set :@address_bits, address_bits

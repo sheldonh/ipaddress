@@ -76,9 +76,9 @@ class IPAddress
   def mask(presentation = :size)
     case presentation
     when :bits
-      mask_bits(@mask_size)
+      mask_bits
     when :dotted
-      dotted_quad_from_bits(mask_bits(@mask_size))
+      dotted_quad_from_bits mask_bits
     when :size
       @mask_size
     else
@@ -125,13 +125,21 @@ class IPAddress
   def self.aggregate(addresses, order = :unsorted)
     return addresses if addresses.size < 2
     sorted = sorted_addresses(addresses, order)
-    aggregates = [ sorted.first.dup ]
+    aggregates = [ sorted.first ]
     (1..sorted.size - 1).each do |i|
-      if !aggregates.last.send(:try_merge, sorted[i])
-        aggregates << sorted[i].dup
+      if merged = try_merge(aggregates[-1], sorted[i])
+        aggregates[-1] = merged
+      else
+        aggregates << sorted[i]
       end
     end
     aggregates
+  end
+
+  # :nodoc:
+  def self.mask_bits(mask_size)
+    bits = 2 ** mask_size - 1
+    bits << (32 - mask_size)
   end
 
   private
@@ -181,13 +189,12 @@ class IPAddress
     end
   end
 
-  def mask_bits(mask_size)
-    bits = 2 ** mask_size - 1
-    bits << (32 - mask_size)
+  def mask_bits
+    self.class.mask_bits @mask_size
   end
 
   def network_bits
-    @address_bits & mask_bits(@mask_size)
+    @address_bits & mask_bits
   end
 
   def size_of_dotted_mask(dotted_quad)
@@ -208,24 +215,10 @@ class IPAddress
 
   def size_of_mask_bits(bits)
     size = 0
-    while size < 32 and bits - mask_bits(size + 1) > 0
+    while size < 32 and bits - self.class.mask_bits(size + 1) > 0
       size += 1
     end
     size
-  end
-
-  # Expand this network to include the network represented by the given IPAddress. Host precision is lost. The given IPAddress
-  # must fit entirely within this one, or it must immediately follow this one and have the same network size. The operation is
-  # skipped and false is returned if these conditions are not met or if the operation would change the network address.
-  def try_merge(other)
-    if include?(other)
-      @address_bits = network_bits
-    elsif adjacent?(other) and @mask_size == other.mask(:size) and network_bits & mask_bits(@mask_size - 1) == network_bits
-      @address_bits = network_bits
-      @mask_size -= 1
-    else
-      false
-    end
   end
 
   def self.sorted_addresses(addresses, order)
@@ -236,6 +229,22 @@ class IPAddress
       addresses
     else
       raise ArgumentError.new("unknown input order #{order.inspect}")
+    end
+  end
+
+  def self.try_merge(this, other)
+    if this.include?(other)
+      if this.network?
+        this
+      else
+        new(this.network(:bits), this.mask(:size))
+      end
+    elsif this.adjacent?(other) and this.mask(:size) == other.mask(:size)
+      network_bits = this.network(:bits)
+      mask_size = this.mask(:size) - 1
+      if network_bits & mask_bits(mask_size) == network_bits
+        new(network_bits, mask_size)
+      end
     end
   end
 end

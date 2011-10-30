@@ -402,6 +402,12 @@ describe "IPAddress" do
       aggregates = IPAddress.aggregate(a)
       a.should == orig_a
     end
+
+    it "avoids unnecessary instance creation" do
+      a = %w{ 192.168.0.0 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress.new("#{i}/28") }
+      aggregates = IPAddress.aggregate(a)
+      aggregates.first.should equal(a.first)
+    end
   end
 
   describe "include Enumerable" do

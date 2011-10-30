@@ -403,10 +403,10 @@ describe "IPAddress" do
       a.should == orig_a
     end
 
-    it "avoids unnecessary instance creation" do
-      a = %w{ 192.168.0.0 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress.new("#{i}/28") }
+    it "avoids unnecessary instance creation by reusing unaggregated instances from the passed array" do
+      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.48 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress.new("#{i}/28") }
       aggregates = IPAddress.aggregate(a)
-      aggregates.first.should equal(a.first)
+      aggregates[1].should equal(a[2]) # 192.168.0.48/28 was not aggregated
     end
   end
 

@@ -126,10 +126,13 @@ class IPAddress
     return addresses if addresses.size < 2
     sorted = sorted_addresses(addresses, order)
     aggregates = [ sorted.first ]
+    dup_first = true
     (1..sorted.size - 1).each do |i|
-      if merged = try_merge(aggregates[-1], sorted[i])
+      if merged = try_merge(aggregates[-1], sorted[i], dup_first)
+        dup_first = merged.equal?(aggregates[-1])
         aggregates[-1] = merged
       else
+        dup_first = true
         aggregates << sorted[i]
       end
     end
@@ -221,6 +224,13 @@ class IPAddress
     size
   end
 
+  def self.modify(this, address_bits, mask_size, dup_first)
+    this = this.dup if dup_first
+    this.instance_variable_set :@address_bits, address_bits
+    this.instance_variable_set :@mask_size, mask_size
+    this
+  end
+
   def self.sorted_addresses(addresses, order)
     case order
     when :unsorted
@@ -232,18 +242,18 @@ class IPAddress
     end
   end
 
-  def self.try_merge(this, other)
+  def self.try_merge(this, other, dup_first)
     if this.include?(other)
       if this.network?
         this
       else
-        new(this.network(:bits), this.mask(:size))
+        modify this, this.network(:bits), this.mask(:size), dup_first
       end
     elsif this.adjacent?(other) and this.mask(:size) == other.mask(:size)
       network_bits = this.network(:bits)
       mask_size = this.mask(:size) - 1
       if network_bits & mask_bits(mask_size) == network_bits
-        new(network_bits, mask_size)
+        modify this, network_bits, mask_size, dup_first
       end
     end
   end

@@ -99,12 +99,12 @@ describe "IPAddress" do
   end
 
   describe "#address" do
-    it "returns a dotted quad string if :dotted is given" do
+    it "returns the address as a dotted quad string if :dotted is given" do
       ip = IPAddress.new("192.168.0.0/30")
       ip.address(:dotted).should == "192.168.0.0"
     end
 
-    it "returns an integer bitmask if :bits is given" do
+    it "returns the address as an integer bitstring if :bits is given" do
       ip = IPAddress.new("192.168.0.4/32")
       ip.address(:bits).should == 3232235524
     end
@@ -120,8 +120,55 @@ describe "IPAddress" do
     end
   end
 
+  describe "#adjacent?" do
+    it "is true if the other IPAddress's network immediately follows this one" do
+      this = IPAddress.new("192.168.0.0/28")
+      other = IPAddress.new("192.168.0.16/28")
+      this.adjacent?(other).should be_true
+    end
+
+    it "is true if the other IPAddress's network immediately precedes this one" do
+      this = IPAddress.new("192.168.0.0/28")
+      other = IPAddress.new("192.167.255.254/28")
+      this.adjacent?(other).should be_true
+    end
+
+    it "is false if the other IPAddress's network includes this one" do
+      this = IPAddress.new("192.168.0.16/28")
+      other = IPAddress.new("192.168.0.0/24")
+      this.adjacent?(other).should be_false
+    end
+
+    it "is false if the other IPAddress's network is included in this one" do
+      this = IPAddress.new("192.168.0.16/28")
+      other = IPAddress.new("192.168.0.0/24")
+      this.adjacent?(other).should be_false
+    end
+
+    it "is false for two host addresses with the same address" do
+      this = IPAddress.new("192.168.0.1")
+      other = IPAddress.new("192.168.0.1")
+      this.adjacent?(other).should be_false
+    end
+  end
+
   describe "#broadcast" do
-    it "returns an IPAddress that represents the broadcast address" do
+    it "returns the broadcast address as an IPAddress if :instance is given" do
+      ip = IPAddress.new("192.168.0.0/24")
+      ip.broadcast(:instance).should == IPAddress.new("192.168.0.255/24")
+    end
+
+    it "returns the broadcast address as an integer bitstring if :bits is given" do
+      ip = IPAddress.new("192.168.0.0/24")
+      ip.broadcast(:bits).should == 3232235775
+    end
+
+    it "returns the broadcast address as a dotted quad string if :dotted is given" do
+      ip = IPAddress.new("192.168.0.0/24")
+      ip.broadcast(:dotted).should == "192.168.0.255"
+    end
+
+    it "defaults to :instance if no presentation is given" do
       ip = IPAddress.new("192.168.0.0/24")
       ip.broadcast.should == IPAddress.new("192.168.0.255/24")
     end
@@ -129,6 +176,50 @@ describe "IPAddress" do
     it "returns itself if it is a broadcast address" do
       ip = IPAddress.new("192.168.0.255/24")
       ip.broadcast.should equal(ip)
+    end
+  end
+
+  describe "#contiguous?" do
+    it "is true if the other IPAddress's network immediately follows this one" do
+      this = IPAddress.new("192.168.0.0/28")
+      other = IPAddress.new("192.168.0.16/28")
+      this.contiguous?(other).should be_true
+    end
+
+    it "is true if the other IPAddress's network immediately precedes this one" do
+      this = IPAddress.new("192.168.0.0/28")
+      other = IPAddress.new("192.167.255.254/28")
+      this.contiguous?(other).should be_true
+    end
+
+    it "is true if the other IPAddress's network includes this one" do
+      this = IPAddress.new("192.168.0.16/28")
+      other = IPAddress.new("192.168.0.0/24")
+      this.contiguous?(other).should be_true
+    end
+
+    it "is true if the other IPAddress's network is included in this one" do
+      this = IPAddress.new("192.168.0.0/24")
+      other = IPAddress.new("192.168.0.16/28")
+      this.contiguous?(other).should be_true
+    end
+
+    it "is true for two host addresses with the same address" do
+      this = IPAddress.new("192.168.0.1")
+      other = IPAddress.new("192.168.0.1")
+      this.contiguous?(other).should be_true
+    end
+
+    it "is false if the other IPAddress's network address is more than 1 greater than this broadcast address" do
+      this = IPAddress.new("192.168.0.0/27")
+      other = IPAddress.new("192.168.0.48/28")
+      this.contiguous?(other).should be_false
+    end
+
+    it "is false if the other IPAddress's broadcast address is more than 1 less than this network address" do
+      this = IPAddress.new("192.168.0.48/28")
+      other = IPAddress.new("192.168.0.0/27")
+      this.contiguous?(other).should be_false
     end
   end
 
@@ -237,9 +328,29 @@ describe "IPAddress" do
   end
 
   describe "#network" do
-    it "returns an IPAddress that represents the address masked with the network mask" do
+    it "returns the network address as an IPAddress if :instance is given" do
+      ip = IPAddress.new("192.168.0.1/24")
+      ip.network(:instance).should == IPAddress.new("192.168.0.0/24")
+    end
+
+    it "returns the network address as an integer bitstring if :bits is given" do
+      ip = IPAddress.new("192.168.0.1/24")
+      ip.network(:bits).should == 3232235520
+    end
+
+    it "returns the network address as a dotted quad string if :dotted is given" do
+      ip = IPAddress.new("192.168.0.1/24")
+      ip.network(:dotted).should == "192.168.0.0"
+    end
+
+    it "defaults to :instance if presentation is not given" do
       ip = IPAddress.new("192.168.0.1/24")
       ip.network.should == IPAddress.new("192.168.0.0/24")
+    end
+
+    it "raises ArgumentError if an unknown presentation is given" do
+      ip = IPAddress.new("192.168.0.1/24")
+      expect { ip.network(:wombat) }.to raise_error(ArgumentError)
     end
 
     it "returns itself if it is a network address" do
@@ -279,6 +390,42 @@ describe "IPAddress" do
     it "returns a CIDR string" do
       ip = IPAddress.new("192.168.0.0/24")
       ip.to_s.should == "192.168.0.0/24"
+    end
+  end
+
+  describe ".aggregate" do
+    it "returns an array of one IPAddress that aggregates two given addresses if they are contiguous" do
+      aggregates = IPAddress.aggregate [IPAddress.new("192.168.0.0/28"), IPAddress.new("192.168.0.16/28")]
+      aggregates.should == [IPAddress.new("192.168.0.0/27")]
+    end
+
+    it "returns an array of two IPAddresses that aggregate two given pairs of contiguous addresses" do
+      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.48 192.168.0.64 }.collect { |i| IPAddress.new("#{i}/28") }
+      aggregates = IPAddress.aggregate(a)
+      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.48/27")]
+    end
+
+    it "copes with unordered addresses if :unsorted is given" do
+      a = %w{ 192.168.0.48 192.168.0.16 192.168.0.64 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
+      aggregates = IPAddress.aggregate(a, :unsorted)
+      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.48/27")]
+    end
+
+    it "skips the sort operation if the :presorted option is given" do
+      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.48 192.168.0.64 }.collect { |i| IPAddress.new("#{i}/28") }
+      a.should_not_receive(:sort)
+      aggregates = IPAddress.aggregate(a, :presorted)
+      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.48/27")]
+    end
+
+    it "defaults to :unsorted if no order is given" do
+      a = %w{ 192.168.0.48 192.168.0.16 192.168.0.64 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
+      IPAddress.aggregate(a).should == IPAddress.aggregate(a, :unsorted)
+    end
+
+    it "raises an ArgumentError if an unknown order is given" do
+      a = %w{ 192.168.0.0 192.168.0.16 }.collect { |i| IPAddress.new("#{i}/28") }
+      expect { IPAddress.aggregate(a, :wombat) }.to raise_error(ArgumentError)
     end
   end
 

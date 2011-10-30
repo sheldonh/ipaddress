@@ -23,12 +23,23 @@ class IPAddress
     end
   end
 
-  def broadcast
-    if @address_bits == broadcast_bits
-      self
-    else
-      self.class.new(broadcast_bits, @mask_size)
+  def adjacent?(other)
+    broadcast_bits.succ == other.network(:bits) or network_bits == other.broadcast(:bits).succ
+  end
+
+  def broadcast(presentation = :instance)
+    case presentation
+    when :bits
+      broadcast_bits
+    when :dotted
+      dotted_quad_from_bits(broadcast_bits)
+    when :instance
+      @address_bits == broadcast_bits ? self : self.class.new(broadcast_bits, @mask_size)
     end
+  end
+
+  def contiguous?(other)
+    network_bits <= other.broadcast(:bits).succ and broadcast_bits.succ >= other.network(:bits)
   end
 
   def each(element = :host)
@@ -68,22 +79,27 @@ class IPAddress
 
   def mask(presentation = :size)
     case presentation
-    when :size
-      @mask_size
     when :bits
       mask_bits(@mask_size)
     when :dotted
       dotted_quad_from_bits(mask_bits(@mask_size))
+    when :size
+      @mask_size
     else
       raise ArgumentError.new("unknown mask presentation #{presentation.inspect}")
     end
   end
 
-  def network
-    if network?
-      self
-    else
-      self.class.new(network_bits, @mask_size)
+  def network(presentation = :instance)
+    case presentation
+    when :bits
+      network_bits
+    when :dotted
+      dotted_quad_from_bits(network_bits)
+    when :instance
+      network? ? self : self.class.new(network_bits, @mask_size)
+    else 
+      raise ArgumentError.new("unknown address presentation #{presentation.inspect}")
     end
   end
 
@@ -105,6 +121,30 @@ class IPAddress
 
   def <=>(other)
     @address_bits <=> other.address(:bits)
+  end
+
+  # Returns an array of the smallest number of IPAddress instances that could represent only the network space described by the
+  # IPAddress instances in the given array. If the input array is already sorted by network address, an unnecessary sort operation
+  # can be optimized out by passing the optional :presorted argument.
+  def self.aggregate(addresses, order = :unsorted)
+    return addresses if addresses.size < 2
+    case order
+    when :unsorted
+      sorted = addresses.sort { |a, b| a.network(:bits) <=> b.network(:bits) }
+    when :presorted
+      sorted = addresses
+    else
+      raise ArgumentError.new("unknown input order #{order.inspect}")
+    end
+    aggregates = [ sorted.first.dup ]
+    (1..sorted.size - 1).each do |i|
+      if aggregates.last.broadcast(:bits).succ >= sorted[i].network(:bits)
+        aggregates.last.send(:merge, sorted[i])
+      else
+        aggregates << sorted[i].dup
+      end
+    end
+    aggregates
   end
 
   private
@@ -159,6 +199,12 @@ class IPAddress
     bits << (32 - mask_size)
   end
 
+  # Expand this network to include the network represented by the given IPAddress. Host precision is lost. The given IPAddress
+  # must be contiguous with this one, and its network address must not be less than this instance's network address.
+  def merge(other)
+    @mask_size = size_of_mask_bits(mask_bits(@mask_size) | other.mask(:bits))
+  end
+
   def network_bits
     @address_bits & mask_bits(@mask_size)
   end
@@ -175,6 +221,14 @@ class IPAddress
         end
         break
       end
+    end
+    size
+  end
+
+  def size_of_mask_bits(bits)
+    size = 0
+    while size < 32 and bits - mask_bits(size + 1) > 0
+      size += 1
     end
     size
   end

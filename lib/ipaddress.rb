@@ -128,19 +128,10 @@ class IPAddress
   # can be optimized out by passing the optional :presorted argument.
   def self.aggregate(addresses, order = :unsorted)
     return addresses if addresses.size < 2
-    case order
-    when :unsorted
-      sorted = addresses.sort { |a, b| a.network(:bits) <=> b.network(:bits) }
-    when :presorted
-      sorted = addresses
-    else
-      raise ArgumentError.new("unknown input order #{order.inspect}")
-    end
+    sorted = sorted_addresses(addresses, order)
     aggregates = [ sorted.first.dup ]
     (1..sorted.size - 1).each do |i|
-      if aggregates.last.broadcast(:bits).succ >= sorted[i].network(:bits)
-        aggregates.last.send(:merge, sorted[i])
-      else
+      if !aggregates.last.send(:try_merge, sorted[i])
         aggregates << sorted[i].dup
       end
     end
@@ -199,12 +190,6 @@ class IPAddress
     bits << (32 - mask_size)
   end
 
-  # Expand this network to include the network represented by the given IPAddress. Host precision is lost. The given IPAddress
-  # must be contiguous with this one, and its network address must not be less than this instance's network address.
-  def merge(other)
-    @mask_size = size_of_mask_bits(mask_bits(@mask_size) | other.mask(:bits))
-  end
-
   def network_bits
     @address_bits & mask_bits(@mask_size)
   end
@@ -231,5 +216,30 @@ class IPAddress
       size += 1
     end
     size
+  end
+
+  # Expand this network to include the network represented by the given IPAddress. Host precision is lost. The given IPAddress
+  # must fit entirely within this one, or it must immediately follow this one and have the same network size. The operation is
+  # skipped and false is returned if these conditions are not met or if the operation would change the network address.
+  def try_merge(other)
+    if include?(other)
+      @address_bits = network_bits
+    elsif adjacent?(other) and @mask_size == other.mask(:size) and network_bits & mask_bits(@mask_size - 1) == network_bits
+      @address_bits = network_bits
+      @mask_size -= 1
+    else
+      false
+    end
+  end
+
+  def self.sorted_addresses(addresses, order)
+    case order
+    when :unsorted
+      addresses.sort { |a, b| a.network(:bits) <=> b.network(:bits) }
+    when :presorted
+      addresses
+    else
+      raise ArgumentError.new("unknown input order #{order.inspect}")
+    end
   end
 end

@@ -394,38 +394,57 @@ describe "IPAddress" do
   end
 
   describe ".aggregate" do
-    it "returns an array of one IPAddress that aggregates two given addresses if they are contiguous" do
+    it "returns an array of one IPAddress that aggregates two given addresses if they are adjacent" do
       aggregates = IPAddress.aggregate [IPAddress.new("192.168.0.0/28"), IPAddress.new("192.168.0.16/28")]
       aggregates.should == [IPAddress.new("192.168.0.0/27")]
     end
 
-    it "returns an array of two IPAddresses that aggregate two given pairs of contiguous addresses" do
-      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.48 192.168.0.64 }.collect { |i| IPAddress.new("#{i}/28") }
+    it "returns an array of two IPAddresses that aggregate two given pairs of adjacent addresses" do
+      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress.new("#{i}/28") }
       aggregates = IPAddress.aggregate(a)
-      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.48/27")]
+      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.64/27")]
+    end
+
+    it "returns an array of one IPAddress that aggregates two given addresses if one includes the other" do
+      a = [IPAddress.new("192.168.0.0/24"), IPAddress.new("192.168.0.64/28")]
+      aggreggates = IPAddress.aggregate(a)
+      aggreggates.should == [IPAddress.new("192.168.0.0/24")]
+    end
+
+    it "avoids aggregation that would inappropriately lower the network address" do
+      a = [IPAddress.new("192.168.0.16/28"), IPAddress.new("192.168.0.32/28")]
+      aggregates = IPAddress.aggregate(a)
+      aggregates.should == a # Aggregation not possible
     end
 
     it "copes with unordered addresses if :unsorted is given" do
-      a = %w{ 192.168.0.48 192.168.0.16 192.168.0.64 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
+      a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
       aggregates = IPAddress.aggregate(a, :unsorted)
-      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.48/27")]
+      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.64/27")]
     end
 
     it "skips the sort operation if the :presorted option is given" do
-      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.48 192.168.0.64 }.collect { |i| IPAddress.new("#{i}/28") }
+      a = %w{ 192.168.0.0 192.168.0.16 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress.new("#{i}/28") }
       a.should_not_receive(:sort)
       aggregates = IPAddress.aggregate(a, :presorted)
-      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.48/27")]
+      aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.64/27")]
     end
 
     it "defaults to :unsorted if no order is given" do
-      a = %w{ 192.168.0.48 192.168.0.16 192.168.0.64 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
+      a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
       IPAddress.aggregate(a).should == IPAddress.aggregate(a, :unsorted)
     end
 
     it "raises an ArgumentError if an unknown order is given" do
       a = %w{ 192.168.0.0 192.168.0.16 }.collect { |i| IPAddress.new("#{i}/28") }
       expect { IPAddress.aggregate(a, :wombat) }.to raise_error(ArgumentError)
+    end
+
+    it "does not modify the passed array or its contents" do
+      a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
+      orig_a = a.dup
+      aggregates = IPAddress.aggregate(a)
+      a.should == orig_a
     end
   end
 

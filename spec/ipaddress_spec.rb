@@ -393,34 +393,39 @@ describe "IPAddress" do
       aggregates.should == a # Aggregation not possible
     end
 
-    it "copes with unordered addresses if :unsorted is given" do
+    it "copes with diminishing network sizes in successive adjacent networks" do
+      a = %w{ 192.168.0.0/30 192.168.0.4/31 192.168.0.6/31 }.map {|i| IPAddress.new(i) }
+      aggregates = IPAddress.aggregate(a)
+      aggregates.should == [ IPAddress.new("192.168.0.0/29") ]
+    end
+
+    it "copes with unordered addresses if input order is given as :unsorted" do
       a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
       aggregates = IPAddress.aggregate(a, :unsorted)
       aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.64/27")]
     end
 
-    it "skips the sort operation if the :presorted option is given" do
+    it "skips the sort operation if input order is given as :presorted" do
       a = %w{ 192.168.0.0 192.168.0.16 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress.new("#{i}/28") }
       a.should_not_receive(:sort)
       aggregates = IPAddress.aggregate(a, :presorted)
       aggregates.should == [IPAddress.new("192.168.0.0/27"), IPAddress.new("192.168.0.64/27")]
     end
 
-    it "defaults to :unsorted if no order is given" do
+    it "defaults to :unsorted if no input order is given" do
       a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
       IPAddress.aggregate(a).should == IPAddress.aggregate(a, :unsorted)
     end
 
-    it "raises an ArgumentError if an unknown order is given" do
+    it "raises an ArgumentError if an unknown input order is given" do
       a = %w{ 192.168.0.0 192.168.0.16 }.collect { |i| IPAddress.new("#{i}/28") }
       expect { IPAddress.aggregate(a, :wombat) }.to raise_error(ArgumentError)
     end
 
     it "does not modify the passed array or its contents" do
-      a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28") }
-      orig_a = a.dup
-      aggregates = IPAddress.aggregate(a)
-      a.should == orig_a
+      a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress.new("#{i}/28").freeze }
+      a.freeze
+      expect { aggregates = IPAddress.aggregate(a) }.to_not raise_error
     end
 
     it "avoids unnecessary instance creation by reusing unaggregated instances from the passed array" do

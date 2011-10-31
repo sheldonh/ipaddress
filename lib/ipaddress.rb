@@ -132,17 +132,27 @@ class IPAddress
   # can be optimized out by passing the optional :presorted argument.
   def self.aggregate(addresses, order = :unsorted)
     return addresses if addresses.size < 2
-    sorted = sorted_addresses(addresses, order)
-    aggregates = [ sorted.first ]
-    dup_first = true
-    (1..sorted.size - 1).each do |i|
-      candidate = sorted[i]
-      if merged = try_merge(aggregates[-1], candidate, dup_first)
-        dup_first = merged.equal?(aggregates[-1])
-        aggregates[-1] = merged
-      else
-        dup_first = true
-        aggregates << candidate
+    aggregates = sorted_addresses(addresses, order)
+    h = 0
+    sure = false
+
+    while !sure
+      sure = true
+      i = h
+      j = h + 1
+      while j < aggregates.size
+        left = aggregates[i]
+        right = aggregates[j]
+        # TODO try to reinstate the dup_first-based optimization
+        if merged = try_merge(left, right, true)
+          aggregates[i] = merged
+          aggregates.delete_at(j)
+          sure = false
+        else
+          h = i
+          i += 1
+          j += 1
+        end
       end
     end
     aggregates
@@ -237,7 +247,7 @@ class IPAddress
     when :unsorted
       addresses.sort { |a, b| a.network(:bits) <=> b.network(:bits) }
     when :presorted
-      addresses
+      addresses.dup
     else
       raise ArgumentError.new("unknown input order #{order.inspect}")
     end

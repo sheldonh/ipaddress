@@ -134,24 +134,21 @@ class IPAddress
     return addresses if addresses.size < 2
     aggregates = sorted_addresses(addresses, order)
     h = 0
-    sure = false
+    sweep = true
 
-    while !sure
-      sure = true
-      i = h
-      j = h + 1
+    while sweep
+      sweep = false
+      j = (i = h) + 1
       while j < aggregates.size
         left = aggregates[i]
         right = aggregates[j]
-        # TODO try to reinstate the dup_first-based optimization
-        if merged = try_merge(left, right, true)
+        if merged = try_merge(left, right)
           aggregates[i] = merged
           aggregates.delete_at(j)
-          sure = false
+          sweep = true
         else
           h = i
-          i += 1
-          j += 1
+          j = (i += 1) + 1
         end
       end
     end
@@ -235,8 +232,7 @@ class IPAddress
     size
   end
 
-  def self.modify(this, address_bits, mask_size, dup_first)
-    this = this.dup if dup_first
+  def self.modify(this, address_bits, mask_size)
     this.instance_variable_set :@address_bits, address_bits
     this.instance_variable_set :@mask_size, mask_size
     this
@@ -253,18 +249,18 @@ class IPAddress
     end
   end
 
-  def self.try_merge(this, other, dup_first)
+  def self.try_merge(this, other)
     if this.include?(other)
       if this.network?
         this
       else
-        modify this, this.network(:bits), this.mask(:size), dup_first
+        modify this.dup, this.network(:bits), this.mask(:size)
       end
     elsif this.precede?(other) and this.mask(:size) == other.mask(:size)
       network_bits = this.network(:bits)
       mask_size = this.mask(:size) - 1
       if network_bits & mask_bits(mask_size) == network_bits
-        modify this, network_bits, mask_size, dup_first
+        modify this.dup, network_bits, mask_size
       end
     end
   end

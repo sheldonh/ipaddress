@@ -218,6 +218,16 @@ describe "IPAddress" do
     end
   end
 
+  describe "#follow?" do
+    it "is true if the other IPAddress's network immediately precedes this one" do
+      IPAddress.new("192.168.1.0/24").follow?(IPAddress.new("192.168.0.0/24")).should be_true
+    end
+
+    it "is false if the other IPAddress's network does not immediately precede this one" do
+      IPAddress.new("192.168.1.2/31").follow?(IPAddress.new("192.168.0.0/24")).should be_false
+    end
+  end
+
   describe "#host?" do
     it "is true if the mask size is 32" do
       ip = IPAddress.new("192.168.0.1/32")
@@ -339,6 +349,16 @@ describe "IPAddress" do
     it "is false if the address is the same as the masked address but the mask size is 0" do
       ip = IPAddress.new("192.168.0.0/0")
       ip.network?.should be_false
+    end
+  end
+
+  describe "#precede?" do
+    it "is true if the other IPAddress's network immediately follows this one" do
+      IPAddress.new("192.168.0.0/24").precede?(IPAddress.new("192.168.1.0/24")).should be_true
+    end
+
+    it "is false if the other IPAddress's network does not immediately follow this one" do
+      IPAddress.new("192.168.0.0/24").precede?(IPAddress.new("192.168.1.2/31")).should be_false
     end
   end
 

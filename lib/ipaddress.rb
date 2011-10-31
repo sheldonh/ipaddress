@@ -24,7 +24,7 @@ class IPAddress
   end
 
   def adjacent?(other)
-    broadcast_bits.succ == other.network(:bits) or network_bits == other.broadcast(:bits).succ
+    precede?(other) or follow?(other)
   end
 
   def broadcast(presentation = :instance)
@@ -54,6 +54,10 @@ class IPAddress
     else
       raise ArgumentError.new("unknown element type #{element.inspect}")
     end
+  end
+
+  def follow?(other)
+    network(:bits) == other.broadcast(:bits).succ
   end
 
   def host?
@@ -107,6 +111,10 @@ class IPAddress
     end
   end
 
+  def precede?(other)
+    broadcast_bits.succ == other.network(:bits)
+  end
+
   def to_s
     "#{address}/#{mask}"
   end
@@ -128,12 +136,13 @@ class IPAddress
     aggregates = [ sorted.first ]
     dup_first = true
     (1..sorted.size - 1).each do |i|
-      if merged = try_merge(aggregates[-1], sorted[i], dup_first)
+      candidate = sorted[i]
+      if merged = try_merge(aggregates[-1], candidate, dup_first)
         dup_first = merged.equal?(aggregates[-1])
         aggregates[-1] = merged
       else
         dup_first = true
-        aggregates << sorted[i]
+        aggregates << candidate
       end
     end
     aggregates
@@ -174,11 +183,11 @@ class IPAddress
   def dotted_quad_from_bits(bits)
     s = (bits >> 24).to_s
     s << OCTET_SEPARATOR
-    s << ((bits & (2 ** 24 - 1)) >> 16).to_s
+    s << ((bits & 0x00FFFFFF) >> 16).to_s
     s << OCTET_SEPARATOR
-    s << ((bits & (2 ** 16 - 1)) >> 8).to_s
+    s << ((bits & 0x0000FFFF) >> 8).to_s
     s << OCTET_SEPARATOR
-    s << (bits & (2 ** 8 - 1)).to_s
+    s << (bits & 0x000000FF).to_s
   end
 
   def initialize_from_string(string)
@@ -241,7 +250,7 @@ class IPAddress
       else
         modify this, this.network(:bits), this.mask(:size), dup_first
       end
-    elsif this.adjacent?(other) and this.mask(:size) == other.mask(:size)
+    elsif this.precede?(other) and this.mask(:size) == other.mask(:size)
       network_bits = this.network(:bits)
       mask_size = this.mask(:size) - 1
       if network_bits & mask_bits(mask_size) == network_bits

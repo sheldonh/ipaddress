@@ -1,6 +1,6 @@
 = ipaddress
 
-This is not the source code got the ipaddress gem[https://rubygems.org/gems/ipaddress].
+This is not the source code for the ipaddress gem[https://rubygems.org/gems/ipaddress].
 That's in a github repo managed by bluemonk[https://github.com/bluemonk/ipaddress].
 
 This is an personal exploration of coding for performance in Ruby.

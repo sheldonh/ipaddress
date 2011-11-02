@@ -120,26 +120,22 @@ module IPAddress
 
     module ClassMethods
       # Returns an array of the smallest number of IPAddress instances that could represent only the network space described by the
-      # IPAddress instances in the given array. If the input array is already sorted by network address, an unnecessary sort operation
-      # can be optimized out by passing the optional :presorted argument.
+      # IPAddress instances in the given array. If the input array is already sorted by network address, an unnecessary sort
+      # operation can be optimized out by passing the optional :presorted argument.
       def aggregate(addresses, order = :unsorted)
         return addresses if addresses.size < 2
         aggregates = sorted_addresses(addresses, order)
-        h = 0
         sweep = true
 
         while sweep
           sweep = false
-          j = (i = h) + 1
+          i, j = 0, 1
           while j < aggregates.size
-            left = aggregates[i]
-            right = aggregates[j]
-            if merged = try_merge(left, right)
+            if merged = try_merge(aggregates[i], aggregates[j])
               aggregates[i] = merged
               aggregates.delete_at(j)
               sweep = true
             else
-              h = i
               j = (i += 1) + 1
             end
           end

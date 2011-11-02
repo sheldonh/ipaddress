@@ -405,6 +405,31 @@ describe "IPAddress::V4" do
       aggregates.should == [ IPAddress::V4.new("192.168.0.0/29") ]
     end
 
+    it "reviews current set for further opportunities each time an aggregation is performed" do
+      nets = %w{
+        192.168.0.0/24
+        192.168.1.0/24
+        192.168.2.0/25
+        192.168.2.128/25
+        192.168.3.0/26
+        192.168.3.64/27
+        192.168.3.96/28
+        192.168.3.112/29
+        192.168.3.120/30
+        192.168.3.124/31
+        192.168.3.126/32
+        192.168.3.127/32
+        192.168.3.128/31
+        192.168.3.130/31
+        192.168.3.132/30
+        192.168.3.136/29
+        192.168.3.144/28
+        192.168.3.160/27
+        192.168.3.192/26
+      }.collect {|s| IPAddress::V4.new(s) }
+      IPAddress::V4::aggregate(nets).should == [IPAddress::V4.new("192.168.0.0/22")]
+    end
+
     it "copes with unordered addresses if input order is given as :unsorted" do
       a = %w{ 192.168.0.64 192.168.0.16 192.168.0.80 192.168.0.0 }.collect { |i| IPAddress::V4.new("#{i}/28") }
       aggregates = IPAddress::V4.aggregate(a, :unsorted)

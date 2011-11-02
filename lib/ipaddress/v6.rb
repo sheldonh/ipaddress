@@ -38,6 +38,21 @@ module IPAddress
       string
     end
 
+    _ruby_version = RUBY_VERSION.split('.').collect &:to_i
+    if _ruby_version[0] > 1 or _ruby_version[1] >= 9 && _ruby_version[2] >= 3
+      def find_compressible(string, offset = 0)
+        if match_data = COMPRESS_REGEX.match(string, offset)
+          match_data[0]
+        end
+      end
+    else
+      def find_compressible(string, offset = 0)
+        if COMPRESS_REGEX.match(string[offset..-1])
+          match_data[0]
+        end
+      end
+    end
+
     def hexen_from_string(network)
       hexen = network.split(SEPARATOR)
       if i = hexen.index('')
@@ -66,21 +81,6 @@ module IPAddress
 
     def self.protocol_bits
       128
-    end
-
-    _ruby_version = RUBY_VERSION.split('.').collect &:to_i
-    if _ruby_version[0] > 1 or _ruby_version[1] >= 9 && _ruby_version[2] >= 3
-      def find_compressible(string, offset = 0)
-        if match_data = COMPRESS_REGEX.match(string, offset)
-          match_data[0]
-        end
-      end
-    else
-      def find_compressible(string, offset = 0)
-        if COMPRESS_REGEX.match(string[offset..-1])
-          match_data[0]
-        end
-      end
     end
   end
 end

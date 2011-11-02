@@ -75,8 +75,15 @@ module IPAddress
       end
     end
 
-    def string_representation(bits)
-      compress_hexen annotate_bits(bits, 128, 16, 16, SEPARATOR)
+    # TODO investigate optimization: perform compression inside annotate_bits
+    def string_representation(bits, format = :string)
+      full = annotate_bits(bits, 128, 16, 16, SEPARATOR)
+      case format
+      when :string
+        full
+      when :compressed
+        compress_hexen full
+      end
     end
 
     def self.protocol_bits

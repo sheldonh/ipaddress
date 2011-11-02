@@ -58,7 +58,7 @@ module IPAddress
       size
     end
 
-    def string_representation(bits)
+    def string_representation(bits, format = :unused)
       annotate_bits bits, 32, 8, 10, OCTET_SEPARATOR
     end
 

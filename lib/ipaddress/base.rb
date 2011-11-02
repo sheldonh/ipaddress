@@ -17,6 +17,8 @@ module IPAddress
       case presentation
       when :bits
         @address_bits
+      when :compressed
+        string_representation(@address_bits, :compressed)
       when :string
         string_representation(@address_bits)
       else
@@ -250,7 +252,7 @@ module IPAddress
     end
 
     # V4 and V6 implement this in terms of annotate_bits
-    def string_representation(bits)
+    def string_representation(bits, format = :string)
       raise NotImplementedError
     end
   end

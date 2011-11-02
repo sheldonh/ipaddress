@@ -122,6 +122,8 @@ module IPAddress
       # Returns an array of the smallest number of IPAddress instances that could represent only the network space described by the
       # IPAddress instances in the given array. If the input array is already sorted by network address, an unnecessary sort
       # operation can be optimized out by passing the optional :presorted argument.
+      # 
+      # TODO flip-flop optimization: try foward until merge, then try back until no merge; done when an end-to-end sweep fails
       def aggregate(addresses, order = :unsorted)
         return addresses if addresses.size < 2
         aggregates = sorted_addresses(addresses, order)

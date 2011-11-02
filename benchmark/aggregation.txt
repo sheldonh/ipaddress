@@ -1,0 +1,6 @@
+$ ruby benchmark/bluemonk-ipaddress-summarize.rb 
+  4.670000   0.010000   4.680000 (  6.440314)
+  aggregation successful
+$ ruby benchmark/sheldonh-ipaddress-aggregate.rb 
+  0.290000   0.010000   0.300000 (  0.428861)
+  aggregation successful

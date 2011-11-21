@@ -115,5 +115,12 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#broadcast" do
+    it "returns the broadcast address as an IPAddress::V6 if :instance is given" do
+      ip = IPAddress::V6.new("fc00::/7")
+      ip.broadcast(:instance).should == IPAddress::V6.new("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+    end
+  end
+
 end
 

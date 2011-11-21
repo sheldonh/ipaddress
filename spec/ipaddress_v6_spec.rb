@@ -82,5 +82,38 @@ describe "IPAddress::V6" do
       expect { IPAddress::V6.new('::1').address(:wombat) }.to raise_error(ArgumentError)
     end
   end
+
+  describe "#adjacent?" do
+    it "is true if the other IPAddress::V6's network immediately follows this one" do
+      this = IPAddress::V6.new("2001:470:1f09:553::1/64")
+      other = IPAddress::V6.new("2001:470:1f09:554::1/64")
+      this.adjacent?(other).should be_true
+    end
+
+    it "is true if the other IPAddress::V6's network immediately precedes this one" do
+      this = IPAddress::V6.new("2001:470:1f09:553::1/64")
+      other = IPAddress::V6.new("2001:470:1f09:552::1/64")
+      this.adjacent?(other).should be_true
+    end
+
+    it "is false if the other IPAddress::V6's network includes this one" do
+      this = IPAddress::V6.new("2001:470:1f09:553::1/64")
+      other = IPAddress::V6.new("2001:470:1f09:552::1/61")
+      this.adjacent?(other).should be_false
+    end
+
+    it "is false if the other IPAddress::V6's network is included in this one" do
+      this = IPAddress::V6.new("2001:470:1f09:553::1/64")
+      other = IPAddress::V6.new("2001:470:1f09:553:4000::1/66")
+      this.adjacent?(other).should be_false
+    end
+
+    it "is false for two host addresses with the same address" do
+      this = IPAddress::V6.new("2001:470:1f09:553::1")
+      other = IPAddress::V6.new("2001:470:1f09:553::1")
+      this.adjacent?(other).should be_false
+    end
+  end
+
 end
 

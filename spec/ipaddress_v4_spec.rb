@@ -71,33 +71,6 @@ describe "IPAddress::V4" do
     end
   end
 
-  describe "#mask" do
-    it "returns the mask size if :size is given" do
-      ip = IPAddress::V4.new("192.168.0.0/27")
-      ip.mask(:size).should == 27
-    end
-
-    it "returns a dotted quad string if :string is given" do
-      ip = IPAddress::V4.new("192.168.0.0/27")
-      ip.mask(:string).should == "255.255.255.224"
-    end
-
-    it "returns an integer bitmask if :bits is given" do
-      ip = IPAddress::V4.new("192.168.0.0/27")
-      ip.mask(:bits).should == 4294967264 # (2**27 - 1) left-shifted 5 bits
-    end
-
-    it "defaults to :size if no argument is given" do
-      ip = IPAddress::V4.new("192.168.0.0/27")
-      ip.mask.should == ip.mask(:size)
-    end
-
-    it "raises an ArgumentError if an unrecognized presentation is given" do
-      ip = IPAddress::V4.new("192.168.0.0/27")
-      expect { ip.mask(:wombat) }.to raise_error(ArgumentError)
-    end
-  end
-
   describe "#address" do
     it "returns the address as a dotted quad string if :string is given" do
       ip = IPAddress::V4.new("192.168.0.0/30")
@@ -296,6 +269,33 @@ describe "IPAddress::V4" do
       wildcard = IPAddress::V4.new("0.0.0.0/0")
       ip = IPAddress::V4.new("192.168.0.1")
       wildcard.include?(ip).should be_true
+    end
+  end
+
+  describe "#mask" do
+    it "returns the mask size if :size is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      ip.mask(:size).should == 27
+    end
+
+    it "returns a dotted quad string if :string is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      ip.mask(:string).should == "255.255.255.224"
+    end
+
+    it "returns an integer bitmask if :bits is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      ip.mask(:bits).should == 4294967264 # (2**27 - 1) left-shifted 5 bits
+    end
+
+    it "defaults to :size if no argument is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      ip.mask.should == ip.mask(:size)
+    end
+
+    it "raises an ArgumentError if an unrecognized presentation is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      expect { ip.mask(:wombat) }.to raise_error(ArgumentError)
     end
   end
 

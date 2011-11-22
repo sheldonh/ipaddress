@@ -74,18 +74,18 @@ describe "IPAddress::V6" do
 
   describe "#address" do
     it "returns the address as a string in uncompressed format if :string is given" do
-      a = IPAddress::V6.new(42540578174773399744588263950387249153, 64)
+      a = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
       a.address(:string).should == "2001:470:1f09:553:0:0:0:1"
     end
 
     it "returns the address as a string in compressed format if :compressed is given" do
-      a = IPAddress::V6.new(42540578174773399744588263950387249153, 64)
+      a = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
       a.address(:compressed).should == "2001:470:1f09:553::1"
     end
 
     it "returns the address as an integer bitstring if :bits is given" do
-      a  = IPAddress::V6.new(42540578174773399744588263950387249153, 64)
-      a.address(:bits).should == 42540578174773399744588263950387249153
+      a  = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
+      a.address(:bits).should == 0x2001_0470_1f09_0553_0000_0000_0000_0001
     end
 
     it "defaults to :string if no argument is given" do

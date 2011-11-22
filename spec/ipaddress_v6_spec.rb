@@ -306,5 +306,37 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#network" do
+    it "returns the network address as an IPAddress::V6 if :instance is given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      a.network(:instance).should == IPAddress::V6.new("fc00::/7")
+    end
+
+    it "returns the network address as an integer bitstring if :bits is given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      a.network(:bits).should == 0xfc00_0000_0000_0000_0000_0000_0000_0000
+    end
+
+    it "returns the network address as a colon-separated hexen string if :string is given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      a.network(:string).should == "fc00:0:0:0:0:0:0:0"
+    end
+
+    it "defaults to :instance if presentation is not given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      a.network.should == IPAddress::V6.new("fc00::/7")
+    end
+
+    it "raises ArgumentError if an unknown presentation is given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      expect { a.network(:wombat) }.to raise_error(ArgumentError)
+    end
+
+    it "returns itself if it is a network address" do
+      a = IPAddress::V6.new("fc00::/7")
+      a.network.should equal(a)
+    end
+  end
+
 end
 

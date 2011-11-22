@@ -204,5 +204,15 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#follow?" do
+    it "is true if the other IPAddress::V6's network immediately precedes this one" do
+      IPAddress::V6.new("fc00::1:0/112").follow?(IPAddress::V6.new("fc00::0:0/112")).should be_true
+    end
+
+    it "is false if the other IPAddress::V6's network does not immediately precede this one" do
+      IPAddress::V6.new("fc00::2:0/112").follow?(IPAddress::V6.new("fc00::0:0/112")).should be_false
+    end
+  end
+
 end
 

@@ -338,5 +338,32 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#network?" do
+    it "is false if the mask size is 128" do
+      a = IPAddress::V6.new("fc00::1/128")
+      a.network?.should be_false
+    end
+
+    it "is false if the mask size is 0" do
+      a = IPAddress::V6.new("::/0")
+      a.network?.should be_false
+    end
+
+    it "is true if the address is the same as the masked address" do
+      a = IPAddress::V6.new("fc00::/7")
+      a.network?.should be_true
+    end
+
+    it "is false if the address is the same as the masked address but the mask size is 128" do
+      a = IPAddress::V6.new("fc00::/128")
+      a.network?.should be_false
+    end
+
+    it "is false if the address is the same as the masked address but the mask size is 0" do
+      a = IPAddress::V6.new("fc00::/0")
+      a.network?.should be_false
+    end
+  end
+
 end
 

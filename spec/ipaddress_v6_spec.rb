@@ -40,7 +40,7 @@ describe "IPAddress::V6" do
     end
 
     it "raises an ArgumentError if given more than 2 arguments" do
-      expect { IPAddress::V4.new(1, 64, :wombat) }.to raise_error(ArgumentError)
+      expect { IPAddress::V6.new(1, 64, :wombat) }.to raise_error(ArgumentError)
     end
   end
 
@@ -281,7 +281,7 @@ describe "IPAddress::V6" do
 
   describe "#mask" do
     it "returns the mask size if :size is given" do
-      a = IPAddress::V4.new("fc00::/64")
+      a = IPAddress::V6.new("fc00::/64")
       a.mask(:size).should == 64
     end
 
@@ -362,6 +362,16 @@ describe "IPAddress::V6" do
     it "is false if the address is the same as the masked address but the mask size is 0" do
       a = IPAddress::V6.new("fc00::/0")
       a.network?.should be_false
+    end
+  end
+
+  describe "#precede?" do
+    it "is true if the other IPAddress::V6's network immediately follows this one" do
+      IPAddress::V6.new("fc00::/8").precede?(IPAddress::V6.new("fd00::/8")).should be_true
+    end
+
+    it "is false if the other IPAddress::V6's network does not immediately follow this one" do
+      IPAddress::V6.new("fc00::/8").precede?(IPAddress::V6.new("fe00::/8")).should be_false
     end
   end
 

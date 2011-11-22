@@ -214,5 +214,32 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#host?" do
+    it "is true if the mask size is 128" do
+      a = IPAddress::V6.new("::1/128")
+      a.host?.should be_true
+    end
+
+    it "is true if the mask size is 0" do
+      a = IPAddress::V6.new("::/0")
+      a.host?.should be_true
+    end
+
+    it "is false if the address is the same as the masked address" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.host?.should be_false
+    end
+
+    it "is true if the address is the same as the masked address but the mask size is 32" do
+      a = IPAddress::V6.new("fc00::/128")
+      a.host?.should be_true
+    end
+
+    it "is true if the address is the same as the masked address but the mask size is 0" do
+      a = IPAddress::V6.new("fc00::/0")
+      a.host?.should be_true
+    end
+  end
+
 end
 

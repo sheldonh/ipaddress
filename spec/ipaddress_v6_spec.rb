@@ -382,5 +382,36 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe ".aggregate" do
+    it "returns an array of one IPAddress::V6 that aggregates two given addresses if they are adjacent" do
+      aggregates = IPAddress::V6.aggregate [IPAddress::V6.new("fc00::/8"), IPAddress::V6.new("fd00::/8")]
+      aggregates.should == [IPAddress::V6.new("fc00::/7")]
+    end
+
+    it "returns an array of two IPAddress::V6's that aggregate two given pairs of adjacent addresses" do
+      a = %w{ fc00:0:: fc00:1:: fd00:0:: fd00:1:: }.collect { |i| IPAddress::V6.new("#{i}/32") }
+      aggregates = IPAddress::V6.aggregate(a)
+      aggregates.should == [IPAddress::V6.new("fc00:0::/31"), IPAddress::V6.new("fd00:0::/31")]
+    end
+
+    it "returns an array of one IPAddress::V6 that aggregates two given addresses if one includes the other" do
+      a = [IPAddress::V6.new("fc00::/8"), IPAddress::V6.new("fc80::/9")]
+      aggreggates = IPAddress::V6.aggregate(a)
+      aggreggates.should == [IPAddress::V6.new("fc00::/8")]
+    end
+
+    it "avoids aggregation that would inappropriately lower the network address" do
+      a = [IPAddress::V6.new("fc80::/9"), IPAddress::V6.new("fd00::/9")]
+      aggregates = IPAddress::V6.aggregate(a)
+      aggregates.should == a # Aggregation not possible
+    end
+
+    it "copes with diminishing network sizes in successive adjacent networks" do
+      a = %w{ fc00::/8 fd00::/9 fd80::/9 }.map {|i| IPAddress::V6.new(i) }
+      aggregates = IPAddress::V6.aggregate(a)
+      aggregates.should == [ IPAddress::V6.new("fc00::/7") ]
+    end
+  end
+
 end
 

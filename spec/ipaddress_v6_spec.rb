@@ -279,5 +279,32 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#mask" do
+    it "returns the mask size if :size is given" do
+      a = IPAddress::V4.new("fc00::/64")
+      a.mask(:size).should == 64
+    end
+
+    it "returns a colon-separated hexen string if :string is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.mask(:string).should == "ffff:ffff:ffff:ffff:0:0:0:0"
+    end
+
+    it "returns an integer bitmask if :bits is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.mask(:bits).should == 0xffff_ffff_ffff_ffff_0000_0000_0000_0000
+    end
+
+    it "defaults to :size if no argument is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.mask.should == a.mask(:size)
+    end
+
+    it "raises an ArgumentError if an unrecognized presentation is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      expect { a.mask(:wombat) }.to raise_error(ArgumentError)
+    end
+  end
+
 end
 

@@ -3,21 +3,36 @@ require 'spec_helper'
 describe "IPAddress::V6" do
   describe "#new" do
     it "takes a CIDR string" do
-      a = IPAddress::V6.new("2001:470:1f09:553::1/64")
-      a.address(:bits).should == 42540578174773399744588263950387249153
+      a = IPAddress::V6.new("fc00:1000:abcd:efff:0000:0000:0000:0001/64")
+      a.address(:bits).should == 0xfc00_1000_abcd_efff_0000_0000_0000_0001
       a.mask(:size).should == 64
     end
 
     it "takes an unmasked address string and assumes a mask size of 128" do
-      a = IPAddress::V6.new("::1")
+      a = IPAddress::V6.new("0000:0000:0000:0000:0000:0000:0000:0001")
       a.address(:bits).should == 1
       a.mask.should == 128
     end
 
     it "takes an integer address and mask size" do
       a = IPAddress::V6.new(1, 64)
-      a.address.should == "0:0:0:0:0:0:0:1"
+      a.address(:bits).should == 1
       a.mask.should == 64
+    end
+
+    it "accepts compressed leading zeroes" do
+      a = IPAddress::V6.new("::1/128")
+      a.address(:bits).should == 0x0000_0000_0000_0000_0000_0000_0000_0001
+    end
+
+    it "accepts compressed inner zeroes" do
+      a = IPAddress::V6.new("fc00:1000::1000:1/7")
+      a.address(:bits).should == 0xfc00_1000_0000_0000_0000_0000_1000_0001
+    end
+
+    it "accepts compressed trailing zeroes" do
+      a = IPAddress::V6.new("fc00::/7")
+      a.address(:bits).should == 0xfc00_0000_0000_0000_0000_0000_0000_0000
     end
 
     it "raises an ArgumentError if given no arguments" do
@@ -117,8 +132,28 @@ describe "IPAddress::V6" do
 
   describe "#broadcast" do
     it "returns the broadcast address as an IPAddress::V6 if :instance is given" do
-      ip = IPAddress::V6.new("fc00::/7")
-      ip.broadcast(:instance).should == IPAddress::V6.new("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+      a = IPAddress::V6.new("fc00::/7")
+      a.broadcast(:instance).should == IPAddress::V6.new("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/7")
+    end
+
+    it "returns the broadcast address as an integer bitstring if :bits is given" do
+      a = IPAddress::V6.new("fc00::/7")
+      a.broadcast(:bits).should == 0xfdff_ffff_ffff_ffff_ffff_ffff_ffff_ffff
+    end
+
+    it "returns the broadcast address as a colon-separated hexen string if :string is given" do
+      a = IPAddress::V6.new("fc00::/7")
+      a.broadcast(:string).should == "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    end
+
+    it "defaults to :instance if no presentation is given" do
+      a = IPAddress::V6.new("fc00::/7")
+      a.broadcast.should == a.broadcast(:instance)
+    end
+
+    it "returns itself if it is a broadcast address" do
+      a = IPAddress::V6.new("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/7")
+      a.broadcast.should equal(a)
     end
   end
 

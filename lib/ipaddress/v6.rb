@@ -55,7 +55,12 @@ module IPAddress
 
     def hexen_from_string(network)
       hexen = network.split(SEPARATOR)
-      if i = hexen.index('')
+      i = hexen.index('')
+      if i.nil?
+        while hexen.size < 8
+          hexen << 0
+        end
+      else
         hexen.delete_at(i)
         while hexen.size < 8
           hexen.insert(i, 0)

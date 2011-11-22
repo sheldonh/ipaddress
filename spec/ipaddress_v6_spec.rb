@@ -83,6 +83,11 @@ describe "IPAddress::V6" do
       a.address(:compressed).should == "2001:470:1f09:553::1"
     end
 
+    it "returns the address as a string in unabbreviated format if :full is given" do
+      a = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
+      a.address(:full).should == "2001:0470:1f09:0553:0000:0000:0000:0001"
+    end
+
     it "returns the address as an integer bitstring if :bits is given" do
       a  = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
       a.address(:bits).should == 0x2001_0470_1f09_0553_0000_0000_0000_0001
@@ -290,6 +295,11 @@ describe "IPAddress::V6" do
       a.mask(:string).should == "ffff:ffff:ffff:ffff:0:0:0:0"
     end
 
+    it "returns the mask in unabbreviated format if :full is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.mask(:full).should == "ffff:ffff:ffff:ffff:0000:0000:0000:0000"
+    end
+
     it "returns an integer bitmask if :bits is given" do
       a = IPAddress::V6.new("fc00::/64")
       a.mask(:bits).should == 0xffff_ffff_ffff_ffff_0000_0000_0000_0000
@@ -320,6 +330,11 @@ describe "IPAddress::V6" do
     it "returns the network address as a colon-separated hexen string if :string is given" do
       a = IPAddress::V6.new("fc00::1/7")
       a.network(:string).should == "fc00:0:0:0:0:0:0:0"
+    end
+
+    it "returns the network address in unabbreviated format if :full is given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      a.network(:full).should == "fc00:0000:0000:0000:0000:0000:0000:0000"
     end
 
     it "defaults to :instance if presentation is not given" do

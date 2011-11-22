@@ -87,6 +87,11 @@ describe "IPAddress::V4" do
       ip.address.should == ip.address(:string)
     end
 
+    it "defaults to :string if :full is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      ip.address(:full).should == ip.address(:string)
+    end
+
     it "raises an ArgumentError if an unrecognized presentation is given" do
       ip = IPAddress::V4.new("192.168.0.0/27")
       expect { ip.address(:wombat) }.to raise_error(ArgumentError)
@@ -295,6 +300,11 @@ describe "IPAddress::V4" do
       ip.mask.should == ip.mask(:size)
     end
 
+    it "defaults to :string if :full is given" do
+      ip = IPAddress::V4.new("192.168.0.0/27")
+      ip.mask(:full).should == ip.mask(:string)
+    end
+
     it "raises an ArgumentError if an unrecognized presentation is given" do
       ip = IPAddress::V4.new("192.168.0.0/27")
       expect { ip.mask(:wombat) }.to raise_error(ArgumentError)
@@ -319,7 +329,12 @@ describe "IPAddress::V4" do
 
     it "defaults to :instance if presentation is not given" do
       ip = IPAddress::V4.new("192.168.0.1/24")
-      ip.network.should == IPAddress::V4.new("192.168.0.0/24")
+      ip.network.should == ip.network(:instance)
+    end
+
+    it "defaults to :string if :full is given" do
+      ip = IPAddress::V4.new("192.168.0.1/24")
+      ip.network(:full).should == ip.network(:string)
     end
 
     it "raises ArgumentError if an unknown presentation is given" do

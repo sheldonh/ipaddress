@@ -15,8 +15,8 @@ module IPAddress
       192 => 2,
       128 => 1,
     }
-
     OCTET_SEPARATOR = '.'
+    SHORT_FORMAT = '%d'
 
     # :nodoc:
     def bits_from_dotted_quad(dotted_quad)
@@ -59,7 +59,7 @@ module IPAddress
     end
 
     def string_representation(bits, format = :unused)
-      annotate_bits bits, 32, 8, 10, OCTET_SEPARATOR
+      annotate_bits bits, 32, 8, SHORT_FORMAT, OCTET_SEPARATOR
     end
 
     def self.protocol_bits

@@ -9,7 +9,9 @@ module IPAddress
     BLANK = ''
     COMPRESS_REGEX = /\b(0+(?::0+)+)\b/
     COMPRESSED_SEPARATOR = '::'
+    LONG_FORMAT = '%04x'
     SEPARATOR = ':'
+    SHORT_FORMAT = '%x'
 
     def bits_from_string(network)
       hexen_from_string(network).inject(0) do |bits, hex|
@@ -82,12 +84,13 @@ module IPAddress
 
     # TODO investigate optimization: perform compression inside annotate_bits
     def string_representation(bits, format = :string)
-      full = annotate_bits(bits, 128, 16, 16, SEPARATOR)
       case format
-      when :string
-        full
       when :compressed
-        compress_hexen full
+        compress_hexen annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
+      when :full
+        annotate_bits(bits, 128, 16, LONG_FORMAT, SEPARATOR)
+      when :string
+        annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
       end
     end
 

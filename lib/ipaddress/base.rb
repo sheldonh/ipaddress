@@ -19,6 +19,8 @@ module IPAddress
         @address_bits
       when :compressed
         string_representation(@address_bits, :compressed)
+      when :full
+        string_representation(@address_bits, :full)
       when :string
         string_representation(@address_bits)
       else
@@ -76,6 +78,8 @@ module IPAddress
       case presentation
       when :bits
         mask_bits
+      when :full
+        string_representation mask_bits, :full
       when :string
         string_representation mask_bits
       when :size
@@ -89,8 +93,10 @@ module IPAddress
       case presentation
       when :bits
         network_bits
+      when :full
+        string_representation network_bits, :full
       when :string
-        string_representation(network_bits)
+        string_representation network_bits
       when :instance
         network? ? self : self.class.new(network_bits, @mask_size)
       else 
@@ -188,15 +194,15 @@ module IPAddress
 
     private
 
-    def annotate_bits(bits, size, width, base, separator)
+    def annotate_bits(bits, size, width, format, separator)
       shift = size - width
       size -= width
-      s = (bits >> shift).to_s(base)
+      s = format % (bits >> shift)
       while size >= width
         mask = 2 ** size - 1
         shift = (size -= width)
         s << separator
-        s << ((bits & mask) >> shift).to_s(base)
+        s << format % ((bits & mask) >> shift)
       end
       s
     end

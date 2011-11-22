@@ -426,7 +426,66 @@ describe "IPAddress::V6" do
       aggregates = IPAddress::V6.aggregate(a)
       aggregates.should == [ IPAddress::V6.new("fc00::/7") ]
     end
-  end
 
+    it "reviews current set for further opportunities each time an aggregation is performed" do
+      nets = %w{
+        fc00:0:0000::/32
+        fc00:1:0000::/32
+        fc00:2:0000::/33
+        fc00:2:8000::/33
+        fc00:3:0000::/34
+        fc00:3:4000::/35
+        fc00:3:6000::/36
+        fc00:3:7000::/37
+        fc00:3:7800::/38
+        fc00:3:7c00::/39
+        fc00:3:7e00::/40
+        fc00:3:7f00::/40
+        fc00:3:8000::/39
+        fc00:3:8200::/39
+        fc00:3:8400::/38
+        fc00:3:8800::/37
+        fc00:3:9000::/36
+        fc00:3:a000::/35
+        fc00:3:c000::/34
+      }.collect {|s| IPAddress::V6.new(s) }
+      IPAddress::V6::aggregate(nets).should == [IPAddress::V6.new("fc00:0:0000::/30")]
+    end
+
+    it "copes with unordered addresses if input order is given as :unsorted" do
+      nets = %w{ fc00:5::/32 fc00:1::/32 fc00:4::/32 fc00:0::/32 }.collect { |s| IPAddress::V6.new(s) }
+      aggregates = IPAddress::V6.aggregate(nets, :unsorted)
+      aggregates.should == [IPAddress::V6.new("fc00:0::/31"), IPAddress::V6.new("fc00:4::/31")]
+    end
+
+    it "skips the sort operation if input order is given as :presorted" do
+      nets = %w{ fc00:0::/32 fc00:1::/32 fc00:4::/32 fc00:5::/32 }.collect { |s| IPAddress::V6.new(s) }
+      nets.should_not_receive(:sort)
+      aggregates = IPAddress::V6.aggregate(nets, :presorted)
+      aggregates.should == [IPAddress::V6.new("fc00:0::/31"), IPAddress::V6.new("fc00:4::/31")]
+    end
+
+    it "defaults to :unsorted if no input order is given" do
+      nets = %w{ fc00:5::/32 fc00:1::/32 fc00:4::/32 fc00:0::/32 }.collect { |s| IPAddress::V6.new(s) }
+      IPAddress::V6.aggregate(nets).should == IPAddress::V6.aggregate(nets, :unsorted)
+    end
+
+    it "raises an ArgumentError if an unknown input order is given" do
+      nets = [ IPAddress::V6.new("fc00:0::/32"), IPAddress::V6.new("fc00:1::/32") ]
+      expect { IPAddress::V6.aggregate(nets, :wombat) }.to raise_error(ArgumentError)
+    end
+
+    it "does not modify the passed array or its contents" do
+      nets = %w{ fc00:0::/32 fc00:1::/32 }.collect { |s| IPAddress::V6.new(s).freeze }
+      nets.freeze
+      expect { aggregates = IPAddress::V6.aggregate(nets) }.to_not raise_error
+    end
+
+    it "avoids unnecessary instance creation by reusing unaggregated instances from the passed array" do
+      nets = %w{ fc00:0::/32 fc00:1::/32 fc00:4::/32 fc00:6::/32 fc00:7::/32 }.collect { |s| IPAddress::V6.new(s) }
+      aggregates = IPAddress::V6.aggregate(nets)
+      aggregates[1].should equal(nets[2]) # fc00:4::/32 was not aggregated
+    end
+  end
 end
 

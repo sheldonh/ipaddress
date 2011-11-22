@@ -466,7 +466,7 @@ describe "IPAddress::V4" do
     end
 
     it "raises an ArgumentError if an unknown input order is given" do
-      a = %w{ 192.168.0.0 192.168.0.16 }.collect { |i| IPAddress::V4.new("#{i}/28") }
+      a = [ IPAddress::V4.new("192.168.0.0/28"), IPAddress::V4.new("192.168.0.16/28") ]
       expect { IPAddress::V4.aggregate(a, :wombat) }.to raise_error(ArgumentError)
     end
 
@@ -480,14 +480,6 @@ describe "IPAddress::V4" do
       a = %w{ 192.168.0.0 192.168.0.16 192.168.0.48 192.168.0.64 192.168.0.80 }.collect { |i| IPAddress::V4.new("#{i}/28") }
       aggregates = IPAddress::V4.aggregate(a)
       aggregates[1].should equal(a[2]) # 192.168.0.48/28 was not aggregated
-    end
-  end
-
-  describe "include Enumerable" do
-    it "supports #collect even though its #each method takes an optional argument" do
-      ip = IPAddress::V4.new("192.168.0.0/30")
-      masks = ip.collect { |i| i.address(:string) }
-      masks.should == ["192.168.0.1", "192.168.0.2"]
     end
   end
 end

@@ -375,5 +375,12 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#to_s" do
+    it "returns a CIDR string" do
+      ip = IPAddress::V6.new("fc00::/7")
+      ip.to_s.should == "fc00:0:0:0:0:0:0:0/7"
+    end
+  end
+
 end
 

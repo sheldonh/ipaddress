@@ -241,5 +241,43 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#include?" do
+    it "is true if the other IPAddress::V6 is a host in this network" do
+      network = IPAddress::V6.new("fc00::/7")
+      a = IPAddress::V6.new("fc00::1")
+      network.include?(a).should be_true
+    end
+
+    it "is false if the other IPAddress::V6 is a host outside this network" do
+      network = IPAddress::V6.new("fc00::/7")
+      a = IPAddress::V6.new("::1")
+      network.include?(a).should be_false
+    end
+
+    it "is true if the other IPAddress::V6 is a network that fits inside this network" do
+      network = IPAddress::V6.new("fc00::/7")
+      a = IPAddress::V6.new("fd00::/8")
+      network.include?(a).should be_true
+    end
+
+    it "is false if the other IPAddress::V6 is a network that does not fit inside this network" do
+      network = IPAddress::V6.new("fc00::/7")
+      a = IPAddress::V6.new("fe00::/8")
+      network.include?(a).should be_false
+    end
+
+    it "is true if the other IPAddress::V6 is a host in this network but its network does not fit inside this network" do
+      network = IPAddress::V6.new("fc00::/8")
+      a = IPAddress::V6.new("fc00::1/7")
+      network.include?(a).should be_true
+    end
+
+    it "is true if this is the unspecified (wildcard) address" do
+      wildcard = IPAddress::V6.new("::/0")
+      a = IPAddress::V6.new("fc00::1/7")
+      wildcard.include?(a).should be_true
+    end
+  end
+
 end
 

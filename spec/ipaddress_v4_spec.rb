@@ -192,8 +192,10 @@ describe "IPAddress::V4" do
 
     it "yields itself once if it is a /32" do
       addresses = []
-      IPAddress::V4.new("192.168.0.1/32").each { |i| addresses << i }
-      addresses.should == [ IPAddress::V4.new("192.168.0.1/32") ]
+      ip = IPAddress::V4.new("192.168.0.1/32")
+      ip.each { |i| addresses << i }
+      addresses.should have(1).element
+      addresses[0].should equal(ip)
     end
   end
 

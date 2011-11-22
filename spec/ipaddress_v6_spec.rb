@@ -157,5 +157,52 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#each" do
+    it "iterates over each address in the network, including network and broadcast address, if :address is given" do
+      a = IPAddress::V6.new("fc00::/126")
+      expected_addresses = [0, 1, 2, 3].collect { |i| IPAddress::V6.new("fc00::#{i}/126") }
+      addresses = []
+      a.each(:address) { |address| addresses << address }
+      addresses.should == expected_addresses
+    end
+
+    it "iterates over each host address in the network, excluding network and broadcast address, if :host is given" do
+      a = IPAddress::V6.new("fc00::/126")
+      expected_addresses = [1, 2].collect { |i| IPAddress::V6.new("fc00::#{i}/126") }
+      addresses = []
+      a.each(:host) { |address| addresses << address }
+      addresses.should == expected_addresses
+    end
+
+    it "defaults to :host if no argument is given" do
+      a = IPAddress::V6.new("fc00::/126")
+      expected_addresses = []
+      a.each(:host) { |address| expected_addresses << address }
+      addresses = []
+      a.each { |address| addresses << address }
+      addresses.should == expected_addresses
+    end
+
+    it "raises ArgumentError if an unknown argument is given" do
+      a = IPAddress::V6.new("fc00::/126")
+      expect { a.each(:wombat) { |address| true } }.to raise_error(ArgumentError)
+    end
+
+    it "preserves its own mask in the instances yielded to the caller's block" do
+      a = IPAddress::V6.new("fc00::/126")
+      addresses = []
+      a.each { |address| addresses << address }
+      addresses.collect(&:mask).should == [126, 126]
+    end
+
+    it "yields itself once if it is a /128" do
+      a = IPAddress::V6.new("::1/128")
+      addresses = []
+      a.each { |address| addresses << address }
+      addresses.should have(1).element
+      addresses[0].should equal(a)
+    end
+  end
+
 end
 

@@ -42,8 +42,12 @@ module IPAddress
     end
 
     def each(element = :host)
-      range_for_each(element).each do |host|
-        yield self.class.new(host, @mask_size)
+      if host?
+        yield self
+      else
+        range_for_each(element).each do |host|
+          yield self.class.new(host, @mask_size)
+        end
       end
     end
 

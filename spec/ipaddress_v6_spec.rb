@@ -146,9 +146,19 @@ describe "IPAddress::V6" do
       a.broadcast(:bits).should == 0xfdff_ffff_ffff_ffff_ffff_ffff_ffff_ffff
     end
 
-    it "returns the broadcast address as a colon-separated hexen string if :string is given" do
-      a = IPAddress::V6.new("fc00::/7")
-      a.broadcast(:string).should == "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    it "returns the broadcast address in RFC5952 format if :string is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.broadcast(:string).should == "fc00::ffff:ffff:ffff:ffff"
+    end
+
+    it "returns the broadcast address in uncompressed format if :uncompressed is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.broadcast(:uncompressed).should == "fc00:0:0:0:ffff:ffff:ffff:ffff"
+    end
+
+    it "returns the broadcast address in unabbreviated format if :full is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.broadcast(:full).should == "fc00:0000:0000:0000:ffff:ffff:ffff:ffff"
     end
 
     it "defaults to :instance if no presentation is given" do
@@ -290,9 +300,14 @@ describe "IPAddress::V6" do
       a.mask(:size).should == 64
     end
 
-    it "returns a colon-separated hexen string if :string is given" do
+    it "returns the mask in RFC5952 format if :string is given" do
       a = IPAddress::V6.new("fc00::/64")
-      a.mask(:string).should == "ffff:ffff:ffff:ffff:0:0:0:0"
+      a.mask(:string).should == "ffff:ffff:ffff:ffff::"
+    end
+
+    it "returns the mask in uncompressed format if :uncompressed is given" do
+      a = IPAddress::V6.new("fc00::/64")
+      a.mask(:uncompressed).should == "ffff:ffff:ffff:ffff:0:0:0:0"
     end
 
     it "returns the mask in unabbreviated format if :full is given" do
@@ -327,9 +342,14 @@ describe "IPAddress::V6" do
       a.network(:bits).should == 0xfc00_0000_0000_0000_0000_0000_0000_0000
     end
 
-    it "returns the network address as a colon-separated hexen string if :string is given" do
+    it "returns the network address in RFC5952 format if :string is given" do
       a = IPAddress::V6.new("fc00::1/7")
-      a.network(:string).should == "fc00:0:0:0:0:0:0:0"
+      a.network(:string).should == "fc00::"
+    end
+
+    it "returns the network address in uncompressed format if :uncompressed is given" do
+      a = IPAddress::V6.new("fc00::1/7")
+      a.network(:uncompressed).should == "fc00:0:0:0:0:0:0:0"
     end
 
     it "returns the network address in unabbreviated format if :full is given" do

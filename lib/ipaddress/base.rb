@@ -17,14 +17,8 @@ module IPAddress
       case presentation
       when :bits
         @address_bits
-      when :full
-        string_representation(@address_bits, :full)
-      when :string
-        string_representation(@address_bits, :compressed)
-      when :uncompressed
-        string_representation(@address_bits)
       else
-        raise ArgumentError.new("unknown address presentation #{presentation.inspect}")
+        string_representation @address_bits, presentation
       end
     end
 
@@ -36,10 +30,10 @@ module IPAddress
       case presentation
       when :bits
         broadcast_bits
-      when :string
-        string_representation(broadcast_bits)
       when :instance
         @address_bits == broadcast_bits ? self : self.class.new(broadcast_bits, @mask_size)
+      else
+        string_representation broadcast_bits, presentation
       end
     end
 
@@ -83,14 +77,10 @@ module IPAddress
       case presentation
       when :bits
         mask_bits
-      when :full
-        string_representation mask_bits, :full
-      when :string
-        string_representation mask_bits
       when :size
         @mask_size
       else
-        raise ArgumentError.new("unknown mask presentation #{presentation.inspect}")
+        string_representation mask_bits, presentation
       end
     end
 
@@ -98,14 +88,10 @@ module IPAddress
       case presentation
       when :bits
         network_bits
-      when :full
-        string_representation network_bits, :full
-      when :string
-        string_representation network_bits
       when :instance
         network? ? self : self.class.new(network_bits, @mask_size)
-      else 
-        raise ArgumentError.new("unknown address presentation #{presentation.inspect}")
+      else
+        string_representation network_bits, presentation
       end
     end
 
@@ -282,7 +268,7 @@ module IPAddress
     end
 
     # V4 and V6 implement this in terms of annotate_bits
-    def string_representation(bits, format = :string)
+    def string_representation(bits, presentation = :string)
       raise NotImplementedError
     end
   end

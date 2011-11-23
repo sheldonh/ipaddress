@@ -58,7 +58,8 @@ module IPAddress
       size
     end
 
-    def string_representation(bits, format = :unused)
+    def string_representation(bits, presentation = :string)
+      raise ArgumentError.new("unknown presentation #{presentation.inspect}") unless presentation == :string
       annotate_bits bits, 32, 8, SHORT_FORMAT, OCTET_SEPARATOR
     end
 

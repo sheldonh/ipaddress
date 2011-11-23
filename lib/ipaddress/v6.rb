@@ -90,14 +90,16 @@ module IPAddress
     end
 
     # TODO investigate optimization: perform compression inside annotate_bits
-    def string_representation(bits, format = :string)
-      case format
-      when :compressed
-        compress_hexen annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
+    def string_representation(bits, presentation = :string)
+      case presentation
       when :full
         annotate_bits(bits, 128, 16, LONG_FORMAT, SEPARATOR)
       when :string
+        compress_hexen annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
+      when :uncompressed
         annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
+      else 
+        raise ArgumentError.new("unknown presentation #{presentation.inspect}")
       end
     end
 

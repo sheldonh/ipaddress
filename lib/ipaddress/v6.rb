@@ -7,7 +7,7 @@ module IPAddress
     private
 
     BLANK = ''
-    COMPRESS_REGEX = /\b(0+(?::0+)+)\b/
+    COMPRESS_REGEX = /\b0+(?::0+)+\b/
     COMPRESSED_SEPARATOR = '::'
     LONG_FORMAT = '%04x'
     SEPARATOR = ':'
@@ -26,33 +26,40 @@ module IPAddress
 
     def compress_hexen(string)
       return string unless match = find_compressible(string)
-      matches = []
+      longest_offset = nil
+      longest_length = nil
       offset = 0
       while match and offset <= string.size
-        matches << match
-        offset += match.size
+        start, stop = match.offset(0)
+        length = stop - start + 1
+        if longest_length.nil? or length > longest_length
+          longest_offset = start
+          longest_length = length
+        end
+        offset += stop + 1
         match = find_compressible(string, offset)
       end
-      longest = matches.max { |a, b| a.size <=> b.size }
-      string[string.index(longest), longest.size] = BLANK
-      string.insert(0, SEPARATOR) if string[0] == SEPARATOR
-      string << SEPARATOR if string[-1] == SEPARATOR
+      if longest_offset
+        string[longest_offset, longest_length - 1] = BLANK
+        string.insert(0, SEPARATOR) if string[0] == SEPARATOR
+        string << SEPARATOR if string[-1] == SEPARATOR
+      end
       string
     end
 
     _ruby_version = RUBY_VERSION.split('.').collect &:to_i
     if _ruby_version[0] > 1 or _ruby_version[1] >= 9 && _ruby_version[2] >= 3
+
       def find_compressible(string, offset = 0)
-        if match_data = COMPRESS_REGEX.match(string, offset)
-          match_data[0]
-        end
+        COMPRESS_REGEX.match(string, offset)
       end
+
     else
+
       def find_compressible(string, offset = 0)
-        if COMPRESS_REGEX.match(string[offset..-1])
-          match_data[0]
-        end
+        COMPRESS_REGEX.match(string[offset..-1])
       end
+
     end
 
     def hexen_from_string(network)

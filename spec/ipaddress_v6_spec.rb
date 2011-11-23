@@ -73,14 +73,14 @@ describe "IPAddress::V6" do
   end
 
   describe "#address" do
-    it "returns the address as a string in uncompressed format if :string is given" do
+    it "returns the address in RFC5952 format if :string is given" do
       a = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
-      a.address(:string).should == "2001:470:1f09:553:0:0:0:1"
+      a.address(:string).should == "2001:470:1f09:553::1"
     end
 
-    it "returns the address as a string in compressed format if :compressed is given" do
+    it "returns the address as a string in uncompressed format if :uncompressed is given" do
       a = IPAddress::V6.new(0x2001_0470_1f09_0553_0000_0000_0000_0001, 64)
-      a.address(:compressed).should == "2001:470:1f09:553::1"
+      a.address(:uncompressed).should == "2001:470:1f09:553:0:0:0:1"
     end
 
     it "returns the address as a string in unabbreviated format if :full is given" do
@@ -391,9 +391,9 @@ describe "IPAddress::V6" do
   end
 
   describe "#to_s" do
-    it "returns a CIDR string" do
-      ip = IPAddress::V6.new("fc00::/7")
-      ip.to_s.should == "fc00:0:0:0:0:0:0:0/7"
+    it "returns a CIDR string with the address in RFC5952 format" do
+      ip = IPAddress::V6.new("FC00::/7")
+      ip.to_s.should == "fc00::/7"
     end
   end
 

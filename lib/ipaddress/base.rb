@@ -17,11 +17,11 @@ module IPAddress
       case presentation
       when :bits
         @address_bits
-      when :compressed
-        string_representation(@address_bits, :compressed)
       when :full
         string_representation(@address_bits, :full)
       when :string
+        string_representation(@address_bits, :compressed)
+      when :uncompressed
         string_representation(@address_bits)
       else
         raise ArgumentError.new("unknown address presentation #{presentation.inspect}")

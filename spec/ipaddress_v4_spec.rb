@@ -183,6 +183,13 @@ describe "IPAddress::V4" do
       addresses.should == expected_addresses
     end
 
+    it "iterates over both addresses in a PPP (/31) network if :host is given" do
+      ip = IPAddress::V4.new("192.168.0.0/31")
+      addresses = []
+      ip.each { |i| addresses << i }
+      addresses.should == [ IPAddress::V4.new("192.168.0.0/31"), IPAddress::V4.new("192.168.0.1/31") ]
+    end
+
     it "raises ArgumentError if an unknown argument is given" do
       ip = IPAddress::V4.new("192.168.0.0/30")
       expect { ip.each(:wombat) { |i| true } }.to raise_error(ArgumentError)

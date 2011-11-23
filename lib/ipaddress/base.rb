@@ -43,12 +43,17 @@ module IPAddress
       end
     end
 
-    def each(element = :host)
+    def each(element = :host, &block)
       if host?
         yield self
       else
-        range_for_each(element).each do |host|
-          yield self.class.new(host, @mask_size)
+        case element
+        when :address
+          each_address &block
+        when :host
+          each_host &block
+        else
+          raise ArgumentError.new("unknown element type #{element.inspect}")
         end
       end
     end
@@ -209,6 +214,25 @@ module IPAddress
 
     def broadcast_bits
       network_bits + 2 ** (self.class.protocol_bits - @mask_size) - 1
+    end
+
+    def each_host
+      if network_size == 2
+        start = network_bits
+        stop = broadcast_bits
+      else
+        start = network_bits + 1
+        stop = broadcast_bits - 1
+      end
+      start.upto(stop) do |host|
+        yield self.class.new(host, @mask_size)
+      end
+    end
+
+    def each_address
+      network_bits.upto(broadcast_bits) do |host|
+        yield self.class.new(host, @mask_size)
+      end
     end
 
     # V4 and V6 implement this

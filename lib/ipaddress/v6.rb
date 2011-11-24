@@ -4,19 +4,25 @@ module IPAddress
   class V6
     include IPAddress::Base
 
+    def ipv4_mapped?
+      return false unless @mask_size >= 96
+      @address_bits & 0xffff_ffff_ffff_ffff_ffff_ffff_0000_0000 == 0x0000_0000_0000_0000_0000_ffff_0000_0000
+    end
+
     private
 
     BLANK = ''
     COMPRESS_REGEX = /\b0+(?::0+)+\b/
     COMPRESSED_SEPARATOR = '::'
-    LONG_FORMAT = '%04x'
+    FULL_FORMAT = '%04x'
+    MAPPED_PREFIX_STRING = '::ffff:'
     SEPARATOR = ':'
     SHORT_FORMAT = '%x'
 
     def bits_from_string(network)
       hexen_from_string(network).inject(0) do |bits, hex|
         bits <<= 16
-        if hex.equal? 0
+        if hex.equal?(0)
           bits
         else
           bits += hex.to_i(16)
@@ -64,7 +70,11 @@ module IPAddress
 
     def hexen_from_string(network)
       hexen = network.split(SEPARATOR)
-      i = hexen.index('')
+      if !hexen.empty? and hexen.last.include?(DOTTED_QUAD_SEPARATOR)
+        hexen[-1] = 0
+        hexen << 0
+      end
+      i = hexen.index(BLANK)
       if i.nil?
         while hexen.size < 8
           hexen << 0
@@ -78,9 +88,22 @@ module IPAddress
       hexen
     end
 
-    def initialize_from_string(string)
-      network, mask = string.split('/')
+    def initialize_address_bits(network)
       @address_bits = bits_from_string(network)
+      if ipv4_mapped? and network.include?(DOTTED_QUAD_SEPARATOR)
+        boundary = network.rindex(SEPARATOR)
+        ipv4_mapped = network[boundary + 1, network.size - boundary - 1]
+        @address_bits |= bits_from_dotted_quad(ipv4_mapped)
+      end
+    end
+
+    def initialize_from_string(string)
+      network, mask = string.split(PREFIX_SEPARATOR)
+      initialize_mask_size(mask)
+      initialize_address_bits(network)
+    end
+
+    def initialize_mask_size(mask)
       if mask and mask.include?(SEPARATOR)
         @mask_size = size_of_dotted_mask(mask)
       else
@@ -90,12 +113,20 @@ module IPAddress
     end
 
     # TODO investigate optimization: perform compression inside annotate_bits
+    def rfc5952_representation(bits)
+      if ipv4_mapped?
+        MAPPED_PREFIX_STRING + dotted_quad(@address_bits & 0xffff_ffff)
+      else
+        compress_hexen annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
+      end
+    end
+
     def string_representation(bits, presentation = :string)
       case presentation
       when :full
-        annotate_bits(bits, 128, 16, LONG_FORMAT, SEPARATOR)
+        annotate_bits(bits, 128, 16, FULL_FORMAT, SEPARATOR)
       when :string
-        compress_hexen annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
+        rfc5952_representation(bits)
       when :uncompressed
         annotate_bits(bits, 128, 16, SHORT_FORMAT, SEPARATOR)
       else 

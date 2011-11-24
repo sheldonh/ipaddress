@@ -2,6 +2,8 @@ module IPAddress
   module Base
     include Enumerable
 
+    DOTTED_QUAD_FORMAT = '%d'
+    DOTTED_QUAD_SEPARATOR = '.'
     PREFIX_SEPARATOR = '/'
 
     def initialize(*args)
@@ -198,8 +200,21 @@ module IPAddress
       s
     end
 
+    # :nodoc:
+    def bits_from_dotted_quad(dotted_quad)
+      octets = dotted_quad.split(DOTTED_QUAD_SEPARATOR).collect &:to_i
+      octets.inject(octets.shift) do |bits, octet|
+        bits <<= 8
+        bits += octet
+      end
+    end
+
     def broadcast_bits
       network_bits + 2 ** (self.class.protocol_bits - @mask_size) - 1
+    end
+
+    def dotted_quad(bits)
+      annotate_bits(bits, 32, 8, DOTTED_QUAD_FORMAT, DOTTED_QUAD_SEPARATOR)
     end
 
     def each_host

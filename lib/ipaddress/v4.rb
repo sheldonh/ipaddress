@@ -15,23 +15,13 @@ module IPAddress
       192 => 2,
       128 => 1,
     }
-    OCTET_SEPARATOR = '.'
     SHORT_FORMAT = '%d'
-
-    # :nodoc:
-    def bits_from_dotted_quad(dotted_quad)
-      octets = dotted_quad.split(OCTET_SEPARATOR).collect &:to_i
-      octets.inject(octets.shift) do |bits, octet|
-        bits <<= 8
-        bits += octet
-      end
-    end
 
     def initialize_from_string(string)
       network, mask = string.split(PREFIX_SEPARATOR)
       @address_bits = bits_from_dotted_quad(network)
       if mask
-        if mask.include?(OCTET_SEPARATOR)
+        if mask.include?(DOTTED_QUAD_SEPARATOR)
           @mask_size = size_of_dotted_mask(mask)
         else
           @mask_size = mask.to_i
@@ -44,7 +34,7 @@ module IPAddress
     # :nodoc:
     def size_of_dotted_mask(dotted_quad)
       size = 0
-      octets = dotted_quad.split(OCTET_SEPARATOR).collect &:to_i
+      octets = dotted_quad.split(DOTTED_QUAD_SEPARATOR).collect &:to_i
       octets.each do |octet|
         if octet == 255
           size += 8
@@ -60,7 +50,7 @@ module IPAddress
 
     def string_representation(bits, presentation = :string)
       raise ArgumentError.new("unknown presentation #{presentation.inspect}") unless presentation == :string
-      annotate_bits bits, 32, 8, SHORT_FORMAT, OCTET_SEPARATOR
+      dotted_quad(bits)
     end
 
     def self.protocol_bits

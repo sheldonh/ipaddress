@@ -35,6 +35,11 @@ describe "IPAddress::V6" do
       a.address(:bits).should == 0xfc00_0000_0000_0000_0000_0000_0000_0000
     end
 
+    it "accepts IPv4-mapped address notation" do
+      a = IPAddress::V6.new("::ffff:192.168.0.1")
+      a.address(:bits).should == 0x0000_0000_0000_0000_0000_ffff_c0a8_0001
+    end
+
     it "raises an ArgumentError if given no arguments" do
       expect { IPAddress::V6.new }.to raise_error(ArgumentError)
     end
@@ -294,6 +299,23 @@ describe "IPAddress::V6" do
     end
   end
 
+  describe "#ipv4_mapped?" do
+    it "is true if the address starts with ::ffff and is a /96 or smaller" do
+      a = IPAddress::V6.new("::ffff:192.168.0.1/104")
+      a.ipv4_mapped?.should be_true
+    end
+
+    it "is false if the address does not start with ::ffff" do
+      a = IPAddress::V6.new("::192.168.0.1/104")
+      a.ipv4_mapped?.should be_false
+    end
+
+    it "is false if the address is larger than a /96" do
+      a = IPAddress::V6.new("::ffff:192.168.0.1/64")
+      a.ipv4_mapped?.should be_false
+    end
+  end
+
   describe "#mask" do
     it "returns the mask size if :size is given" do
       a = IPAddress::V6.new("fc00::/64")
@@ -414,6 +436,41 @@ describe "IPAddress::V6" do
     it "returns a CIDR string with the address in RFC5952 format" do
       ip = IPAddress::V6.new("FC00::/7")
       ip.to_s.should == "fc00::/7"
+    end
+
+    it "compresses the longest run of zeroes" do
+      a = IPAddress::V6.new(0xfc00_0000_0000_0001_0000_0000_0000_0001, 64)
+      a.to_s.should == "fc00:0:0:1::1/64"
+    end
+
+    it "compresses the first of the two or more longest runs of zeroes" do
+      a = IPAddress::V6.new(0xfc00_0000_0000_0001_0000_0000_0001_0001, 64)
+      a.to_s.should == "fc00::1:0:0:1:1/64"
+    end
+
+    it "compresses leading zeroes" do
+      a = IPAddress::V6.new(0x0000_0000_0000_0000_0000_feee_0000_0001, 96)
+      a.to_s.should == "::feee:0:1/96"
+    end
+
+    it "compresses trailing zeroes" do
+      a = IPAddress::V6.new(0xfc00_0000_0000_0000_0000_0000_0000_0000, 7)
+      a.to_s.should == "fc00::/7"
+    end
+
+    it "compresses the longest run of leading or trailing zeroes" do
+      a = IPAddress::V6.new(0x0000_0000_0001_0001_0001_0000_0000_0000, 86)
+      a.to_s.should == "0:0:1:1:1::/86"
+    end
+
+    it "compresses the leading zeroes if leading and trailing runs are the same length" do
+      a = IPAddress::V6.new(0x0000_0000_0000_0001_0001_0000_0000_0000, 86)
+      a.to_s.should == "::1:1:0:0:0/86"
+    end
+
+    it "expresses the last 32 bits of an IPv4-mapped address as a dotted quad" do
+      a = IPAddress::V6.new(0x0000_0000_0000_0000_0000_ffff_c0a8_0000, 96)
+      a.to_s.should == "::ffff:192.168.0.0/96"
     end
   end
 

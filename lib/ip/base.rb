@@ -1,4 +1,4 @@
-module IPAddress
+module IP
   module Base
     include Enumerable
 
@@ -122,8 +122,8 @@ module IPAddress
     end
 
     module ClassMethods
-      # Returns an array of the smallest number of IPAddress instances that could represent only the network space described by the
-      # IPAddress instances in the given array. If the input array is already sorted by network address, an unnecessary sort
+      # Returns an array of the smallest number of IP instances that could represent only the network space described by the
+      # IP instances in the given array. If the input array is already sorted by network address, an unnecessary sort
       # operation can be optimized out by passing the optional :presorted argument.
       def aggregate(addresses, order = :unsorted)
         return addresses if addresses.size < 2

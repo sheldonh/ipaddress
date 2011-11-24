@@ -1,8 +1,8 @@
-require 'ipaddress/base'
+require 'ip/base'
 
-module IPAddress
+module IP
   class V6
-    include IPAddress::Base
+    include IP::Base
 
     def ipv4_mapped?
       return false unless @mask_size >= 96

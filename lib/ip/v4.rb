@@ -1,8 +1,8 @@
-require 'ipaddress/base'
+require 'ip/base'
 
-module IPAddress
+module IP
   class V4
-    include IPAddress::Base
+    include IP::Base
 
     private
 

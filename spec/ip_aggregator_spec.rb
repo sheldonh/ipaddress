@@ -8,7 +8,7 @@ describe "IP::Aggregator" do
 
   context "aggregating IP::V4 instances" do
 
-    describe ".aggregate" do
+    describe "#aggregate" do
       it "returns an array of one IP::V4 that aggregates two given addresses if they are adjacent" do
         aggregates = @aggregator.aggregate [IP::V4.new("192.168.0.0/28"), IP::V4.new("192.168.0.16/28")]
         aggregates.should == [IP::V4.new("192.168.0.0/27")]
@@ -104,7 +104,7 @@ describe "IP::Aggregator" do
 
   context "aggregating IP::V6 instances" do
 
-    describe ".aggregate" do
+    describe "#aggregate" do
       it "returns an array of one IP::V6 that aggregates two given addresses if they are adjacent" do
         aggregates = @aggregator.aggregate [IP::V6.new("fc00::/8"), IP::V6.new("fd00::/8")]
         aggregates.should == [IP::V6.new("fc00::/7")]
@@ -192,6 +192,19 @@ describe "IP::Aggregator" do
         nets = %w{ fc00:0::/32 fc00:1::/32 fc00:4::/32 fc00:6::/32 fc00:7::/32 }.collect { |s| IP::V6.new(s) }
         aggregates = @aggregator.aggregate(nets)
         aggregates[1].should equal(nets[2]) # fc00:4::/32 was not aggregated
+      end
+
+    end
+
+  end
+
+  context "aggregating a mix of IP::V4 and IP::V6 instances" do
+
+    describe "#aggregate" do
+
+      it "raises an exception if given two instances of differing classes" do
+        nets = [ IP::V4.new("192.168.0.0/24"), IP::V6.new("fc00::/7") ]
+        expect { @aggregator.aggregate(nets) }.to raise_error(ArgumentError)
       end
 
     end

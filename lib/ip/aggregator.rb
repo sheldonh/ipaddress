@@ -37,6 +37,8 @@ module IP
     end
 
     def try_merge(this, other)
+      raise ArgumentError.new("can't aggregate IP::V4 and IP::V6 instances") unless other.is_a?(this.class)
+
       if this.include?(other)
         if this.network?
           this

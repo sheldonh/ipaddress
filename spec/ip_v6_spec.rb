@@ -50,31 +50,75 @@ describe "IP::V6" do
   end
 
   describe "#<=>" do
-    it "returns -1 if the other IP::V6 has an higher integer address" do
-      (IP::V6.new('::1') <=> IP::V6.new('::2')).should == -1
+
+    context "given an IP::V6" do
+
+      it "returns -1 if other has an higher integer address" do
+        (IP::V6.new('::1') <=> IP::V6.new('::2')).should == -1
+      end
+
+      it "returns 1 if other has a lower integer address" do
+        (IP::V6.new('::2') <=> IP::V6.new('::1')).should == 1
+      end
+
+      it "returns 0 if other has the same integer address" do
+        (IP::V6.new('::1') <=> IP::V6.new('::1')).should == 0
+      end
+
     end
 
-    it "returns 1 if the other IP::V6 has a lower integer address" do
-      (IP::V6.new('::2') <=> IP::V6.new('::1')).should == 1
+    context "given an IP::V4" do
+
+      it "returns -1 if the other has an higher integer IPv4-mapped address" do
+        (IP::V6.new('::ffff:192.168.0.0') <=> IP::V4.new('192.168.0.1')).should == -1
+      end
+
+      it "returns 1 if the other has a lower integer IPv4-mapped address" do
+        (IP::V6.new('::ffff:192.168.0.1') <=> IP::V4.new('192.168.0.0')).should == 1
+      end
+
+      it "returns 0 if the other has the same integer IPv4-mapped address" do
+        (IP::V6.new('::ffff:192.168.0.0') <=> IP::V4.new('192.168.0.0')).should == 0
+      end
+
     end
 
-    it "returns 0 if the other IP::V6 has the same integer address" do
-      (IP::V6.new('::1') <=> IP::V6.new('::1')).should == 0
-    end
   end
 
   describe "#==" do
-    it "is true if the other IP::V6 has the same address and mask size" do
-      IP::V6.new('2001:470:1f09:553::1/64').should == IP::V6.new('2001:470:1f09:553:0:0:0:1/64')
+
+    context "given an IP::V6" do
+
+      it "is true if the other IP::V6 has the same address and mask size" do
+        IP::V6.new('2001:470:1f09:553::1/64').should == IP::V6.new('2001:470:1f09:553:0:0:0:1/64')
+      end
+
+      it "is false if the other IP::V6 has a different address" do
+        IP::V6.new('2001:470:1f09:553::1/64').should_not == IP::V6.new('2001:470:1f09:553::2/64')
+      end
+
+      it "is false if the other IP::V6 has a different mask size" do
+        IP::V6.new('2001:470:1f09:553::1/64').should_not == IP::V6.new('2001:470:1f09:553::1/72')
+      end
+
     end
 
-    it "is false if the other IP::V6 has a different address" do
-      IP::V6.new('2001:470:1f09:553::1/64').should_not == IP::V6.new('2001:470:1f09:553::2/64')
+    context "given an IP::V4" do
+
+      it "is true if the other has the same IPv4-mapped address and mask size" do
+        IP::V6.new('::ffff:10.0.0.1/120').should == IP::V4.new('10.0.0.1/24')
+      end
+
+      it "is false if the other has a different IPv4-mapped address" do
+        IP::V6.new('::ffff:10.0.0.1/120').should_not == IP::V4.new('10.0.0.2/24')
+      end
+
+      it "is false if the other has a different IPv4-mapped mask size" do
+        IP::V6.new('::ffff:10.0.0.1/120').should_not == IP::V4.new('10.0.0.1/28')
+      end
+
     end
 
-    it "is false if the other IP::V6 has a different mask size" do
-      IP::V6.new('2001:470:1f09:553::1/64').should_not == IP::V6.new('2001:470:1f09:553::1/72')
-    end
   end
 
   describe "#address" do
@@ -175,6 +219,13 @@ describe "IP::V6" do
       ip = IP::V6.new("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/7")
       ip.broadcast.should equal(ip)
     end
+  end
+
+  describe "#compare_network" do
+
+    context "given an IP::V6" do
+    end
+
   end
 
   describe "#each" do
@@ -472,6 +523,15 @@ describe "IP::V6" do
       ip = IP::V6.new(0x0000_0000_0000_0000_0000_ffff_c0a8_0000, 96)
       ip.to_s.should == "::ffff:192.168.0.0/96"
     end
+  end
+
+  describe "#to_v6" do
+
+    it "returns itself" do
+      ip = IP::V6.new('fc00::/7')
+      ip.to_v6.should equal(ip)
+    end
+
   end
 
 end

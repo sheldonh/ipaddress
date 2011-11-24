@@ -207,6 +207,12 @@ describe "IP::Aggregator" do
         expect { @aggregator.aggregate(nets) }.to raise_error(ArgumentError)
       end
 
+      it "IPV4-maps a V4 to merge it into a V6" do
+        nets = [ IP::V6.new("::ffff:192.168.0.0/120"), IP::V4.new("192.168.1.0/24") ]
+        # TODO failing because sort doesn't automap
+        @aggregator.aggregate(nets).should == [ IP::V6.new("::ffff:192.168.0.0/119") ]
+      end
+
     end
 
   end

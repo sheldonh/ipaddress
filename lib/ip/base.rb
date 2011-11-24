@@ -115,12 +115,29 @@ module IP
       "#{address}/#{mask}"
     end
 
+    def to_v6
+      if is_a?(IP::V4)
+        IP::V6.new(0x0000_0000_0000_0000_0000_ffff_0000_0000 | @address_bits, 96 + @mask_size)
+      else
+        self
+      end
+    end
+
     def ==(other)
-      @address_bits == other.address(:bits) and @mask_size == other.mask(:size)
+      if self.is_a?(IP::V6) or other.is_a?(IP::V6)
+        this, that = self.to_v6, other.to_v6
+        this.address(:bits) == that.address(:bits) and this.mask(:size) == that.mask(:size)
+      else
+        @address_bits == other.address(:bits) and @mask_size == that.mask(:size)
+      end
     end
 
     def <=>(other)
-      @address_bits <=> other.address(:bits)
+      if self.is_a?(IP::V6) or other.is_a?(IP::V6)
+        self.to_v6.address(:bits) <=> other.to_v6.address(:bits)
+      else
+        @address_bits <=> other.address(:bits)
+      end
     end
 
     module ClassMethods

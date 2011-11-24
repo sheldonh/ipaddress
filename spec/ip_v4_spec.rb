@@ -384,6 +384,23 @@ describe "IP::V4" do
     end
   end
 
+  describe "#to_v6" do
+    it "returns an IP::V6" do
+      ip = IP::V4.new("192.168.0.0/24")
+      ip.to_v6.should be_a(IP::V6)
+    end
+
+    it "maps its address into the standard IPv4-mapped address space" do
+      ip = IP::V4.new("192.168.0.0/24")
+      ip.to_v6.address(:bits).should == 0x0000_0000_0000_0000_0000_ffff_c0a8_0000
+    end
+
+    it "maps its mask size to 96 more than the current value" do
+      ip = IP::V4.new("192.168.0.0/24")
+      ip.to_v6.mask(:size).should == 120
+    end
+  end
+
   describe ".aggregate" do
     it "returns an array of one IP::V4 that aggregates two given addresses if they are adjacent" do
       aggregates = IP::V4.aggregate [IP::V4.new("192.168.0.0/28"), IP::V4.new("192.168.0.16/28")]

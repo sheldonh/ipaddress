@@ -28,6 +28,7 @@ module IP
     def sorted_addresses(addresses, order)
       case order
       when :unsorted
+        # TODO want to write addresses.sort { |a, b| a.compare_network(b) }
         addresses.sort { |a, b| a.network(:bits) <=> b.network(:bits) }
       when :presorted
         addresses.dup
@@ -37,8 +38,9 @@ module IP
     end
 
     def try_merge(this, other)
-      raise ArgumentError.new("can't aggregate IP::V4 and IP::V6 instances") unless other.is_a?(this.class)
-
+      if this.is_a?(IP::V6) and other.is_a?(IP::V4)
+        other = IP::V6.new(0x0000_0000_0000_0000_0000_ffff_0000_0000 | other.address(:bits), other.mask(:size) + 96)
+      end
       if this.include?(other)
         if this.network?
           this

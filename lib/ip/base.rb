@@ -1,3 +1,5 @@
+require 'ip/aggregator'
+
 module IP
   module Base
     include Enumerable
@@ -122,28 +124,9 @@ module IP
     end
 
     module ClassMethods
-      # Returns an array of the smallest number of IP instances that could represent only the network space described by the
-      # IP instances in the given array. If the input array is already sorted by network address, an unnecessary sort
-      # operation can be optimized out by passing the optional :presorted argument.
-      def aggregate(addresses, order = :unsorted)
-        return addresses if addresses.size < 2
-        aggregates = sorted_addresses(addresses, order)
-        sweep = true
 
-        while sweep
-          sweep = false
-          i, j = 0, 1
-          while j < aggregates.size
-            if merged = try_merge(aggregates[i], aggregates[j])
-              aggregates[i] = merged
-              aggregates.delete_at(j)
-              sweep = true
-            else
-              j = (i += 1) + 1
-            end
-          end
-        end
-        aggregates
+      def aggregate(addresses, order = :unsorted)
+        IP::Aggregator.new.aggregate addresses, order
       end
 
       def mask_bits(mask_size)
@@ -151,34 +134,6 @@ module IP
         bits << (protocol_bits - mask_size)
       end
 
-      private
-
-      def sorted_addresses(addresses, order)
-        case order
-        when :unsorted
-          addresses.sort { |a, b| a.network(:bits) <=> b.network(:bits) }
-        when :presorted
-          addresses.dup
-        else
-          raise ArgumentError.new("unknown input order #{order.inspect}")
-        end
-      end
-
-      def try_merge(this, other)
-        if this.include?(other)
-          if this.network?
-            this
-          else
-            this.dup.send :modify, this.network(:bits), this.mask(:size)
-          end
-        elsif this.precede?(other) and this.mask(:size) == other.mask(:size)
-          network_bits = this.network(:bits)
-          mask_size = this.mask(:size) - 1
-          if network_bits & mask_bits(mask_size) == network_bits
-            this.dup.send :modify, network_bits, mask_size
-          end
-        end
-      end
     end
 
     def self.included(base)
